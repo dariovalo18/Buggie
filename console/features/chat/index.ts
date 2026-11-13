@@ -69,7 +69,7 @@ async function mount(ctx: PageContext): Promise<void> {
   const view = ui.h('div', 'chatview');
   root.append(view);
 
-  let bot = 'Coo';
+  let bot = 'Buggie';
   let paused = false;
   let phase: RunPhase | null = null;
   let live: { steps: string[]; startedAt: number } | null = null;

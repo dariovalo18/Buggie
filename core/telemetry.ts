@@ -25,7 +25,6 @@ import { fileURLToPath } from 'node:url';
 import { asRecord, field, isRecord, readState, writeState } from './state-file.ts';
 import { readTextFile } from 'cortico/core/util.ts';
 
-const TELEMETRY_URL = 'https://survey.palailab.org/v1/report';
 /** How often the day's record goes out while the app runs. */
 const SEND_MS = 30 * 60_000;
 /** Running time is counted in whole minutes. */
@@ -167,6 +166,7 @@ export interface TelemetryOptions {
   snapshot: () => Record<string, unknown>;
   /** The installed extensions as they should be reported, `name` or `private`, once per package. */
   extensions: () => Array<{ name: string; version: string | null; kind: string | null }>;
+  /** Where reports go; without one nothing is sent, as this build has no statistics service. */
   url?: string;
   fetchImpl?: typeof fetch;
   now?: () => Date;
@@ -178,7 +178,7 @@ const newDay = (date: string): Day => ({ date, runningMinutes: 0, minutes: [], c
 
 export class Telemetry {
   private state: State;
-  private readonly url: string;
+  private readonly url: string | undefined;
   private readonly fetchImpl: typeof fetch;
   private readonly now: () => Date;
   private timers: NodeJS.Timeout[] = [];
@@ -192,7 +192,7 @@ export class Telemetry {
   private readonly lastTries = new Map<string, { m: ModelUse; try: ModelTry }>();
 
   constructor(private readonly opts: TelemetryOptions) {
-    this.url = opts.url ?? TELEMETRY_URL;
+    this.url = opts.url;
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.now = opts.now ?? (() => new Date());
     this.lastTick = this.now().getTime();
@@ -401,6 +401,7 @@ export class Telemetry {
   }
 
   private async sendOnce(): Promise<void> {
+    if (!this.url) return;
     this.syncEnabled();
     const enabled = this.state.enabled;
     if (enabled) this.rollDay();

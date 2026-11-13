@@ -9,10 +9,10 @@
   ; the uninstaller, the registry entry and the shortcuts are written, so a failed install leaves
   ; nothing behind. customFiles_x64 is undocumented but the first hook after the files land
   ; (customInstall runs only after the install is already registered).
-  ${IfNot} ${FileExists} "$INSTDIR\Coopanion.exe"
+  ${IfNot} ${FileExists} "$INSTDIR\Buggie.exe"
   ${OrIfNot} ${FileExists} "$INSTDIR\resources\app\node_modules\tsx\dist\loader.mjs"
     ; /SD: a silent install (an automatic update runs one) must not wait on the box
-    MessageBox MB_OK|MB_ICONSTOP "Coopanion's files did not all reach the install directory: the installer could not extract its package. This is usually antivirus software or low disk space. The install is incomplete; please check and run the installer again." /SD IDOK
+    MessageBox MB_OK|MB_ICONSTOP "Buggie's files did not all reach the install directory: the installer could not extract its package. This is usually antivirus software or low disk space. The install is incomplete; please check and run the installer again." /SD IDOK
     Abort
   ${EndIf}
 !macroend
@@ -33,7 +33,7 @@
   ${IfNot} ${isUpdated}
     ${If} $1 == "$LOCALAPPDATA"
     ${OrIf} $3 == "$APPDATA"
-      StrCpy $INSTDIR "$PROFILE\Coopanion"
+      StrCpy $INSTDIR "$PROFILE\Buggie"
     ${EndIf}
   ${EndIf}
 !macroend
@@ -44,8 +44,8 @@
   SetOutPath $TEMP
   RMDir /r "$INSTDIR\resources"
   RMDir /r "$INSTDIR\locales"
-  Delete "$INSTDIR\Coopanion.exe"
-  Delete "$INSTDIR\Uninstall Coopanion.exe"
+  Delete "$INSTDIR\Buggie.exe"
+  Delete "$INSTDIR\Uninstall Buggie.exe"
   Delete "$INSTDIR\*.dll"
   Delete "$INSTDIR\*.pak"
   Delete "$INSTDIR\*.bin"
@@ -55,19 +55,4 @@
   Delete "$INSTDIR\LICENSES.chromium.html"
   ; removed only when nothing is left, data\ included
   RMDir "$INSTDIR"
-!macroend
-
-!macro customUnInstall
-  ; usage statistics (core/telemetry.ts): an uninstall, not the one an update runs, is reported
-  ; with the install's id; the app keeps the id file only while statistics are switched on
-  ${IfNot} ${isUpdated}
-  ${AndIf} ${FileExists} "$INSTDIR\data\home\companion\telemetry-id"
-    FileOpen $0 "$INSTDIR\data\home\companion\telemetry-id" r
-    FileRead $0 $1 64
-    FileClose $0
-    ; the id reaches PowerShell as an environment variable and is sent only when it is a UUID: the file is data, never part of the command
-    System::Call 'kernel32::SetEnvironmentVariable(t "COOPANION_INSTALL_ID", t r1)'
-    nsExec::Exec `powershell -NoProfile -NonInteractive -Command "try { $$id = ([string]$$env:COOPANION_INSTALL_ID).Trim(); if ($$id -match '^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}\z') { [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; Invoke-RestMethod -Method Post -Uri 'https://survey.palailab.org/v1/uninstall' -ContentType 'application/json' -Body (ConvertTo-Json @{ installId = $$id }) -TimeoutSec 5 | Out-Null } } catch {}"`
-    Pop $0
-  ${EndIf}
 !macroend

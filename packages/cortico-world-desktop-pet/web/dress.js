@@ -216,7 +216,7 @@ function renderFigure() {
   const box = $('#optFigure');
   box.textContent = '';
   const opts = el('div', 'opts');
-  const choices = [{ id: 'coo', label: 'Coo', svg: `<svg viewBox="${CROP.palette}" aria-hidden="true">${mini('neutral', skin)}</svg>` },
+  const choices = [{ id: 'coo', label: 'Buggie', svg: `<svg viewBox="${CROP.palette}" aria-hidden="true">${mini('neutral', skin)}</svg>` },
     // a pack shows its own picture whatever it wears; the rows below show the picks
     ...packs.filter((p) => p.id !== 'coo').map((p) => ({ id: p.id, label: nameOf(p.name), thumb: p.thumb ? p.base + p.thumb : null, pack: p }))];
   for (const c of choices) {
@@ -349,7 +349,7 @@ const lookId = () => Date.now().toString(36) + Math.random().toString(36).slice(
 /** A new look's name: the pack and its preset, or Coo and its palette. */
 function lookName(s) {
   const pack = s.figure && s.figure !== 'coo' ? packs.find((p) => p.id === s.figure) : null;
-  if (!pack) return `Coo · ${cooName('palette', s.palette)}`;
+  if (!pack) return `Buggie · ${cooName('palette', s.palette)}`;
   const preset = pack.presets.find((p) => p.id === s.scheme);
   return preset ? `${nameOf(pack.name)} · ${nameOf(preset.name)}` : nameOf(pack.name);
 }

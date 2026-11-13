@@ -6,7 +6,7 @@ export function sidebarBrand(doc: Document, signal: AbortSignal): HTMLDivElement
   const lockup = doc.createElement('div');
   lockup.className = 'companion-lockup';
   lockup.setAttribute('role', 'img');
-  lockup.setAttribute('aria-label', 'Coopanion');
+  lockup.setAttribute('aria-label', 'Buggie');
 
   const mark = brandMark(doc, 'companion-brand');
   const lettering = coopanionLettering(doc);

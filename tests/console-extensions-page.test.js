@@ -730,11 +730,11 @@ describe('provider connection cards', () => {
   const order = (root) => [...root.querySelectorAll('.connection-cards > .connection-card')].map(card => card.dataset.provider);
   it('asks before deleting a connection, and refuses one a Bot uses', async () => {
     const deleted = [];
-    const { root } = await openConnections({ references: { b: ['Coo'] }, onDelete: url => deleted.push(url) });
+    const { root } = await openConnections({ references: { b: ['Buggie'] }, onDelete: url => deleted.push(url) });
     const trash = (name) => root.querySelector(`.connection-card[data-provider="${name}"] .connection-erase`);
     trash('b').click(); await flush();
     // Only told: one button, nothing to choose.
-    expect(document.querySelector('.modal').textContent).toContain('Coo');
+    expect(document.querySelector('.modal').textContent).toContain('Buggie');
     const only = [...document.querySelectorAll('.modal .confirm-card button')];
     expect(only).toHaveLength(1);
     only[0].click(); await flush();
@@ -1088,20 +1088,20 @@ describe('World library and catalog', () => {
     expect(calls.some(call => call.url === '/api/worlds/activation')).toBe(false);
     answer(false); await flush();
     expect(calls.some(call => call.url === '/api/worlds/activation')).toBe(false);
-    root.querySelector('[aria-label="对 Coo 隐藏"]').click(); await flush();
+    root.querySelector('[aria-label="对 Buggie 隐藏"]').click(); await flush();
     // Hiding asks first; cancelling leaves the World as it was.
-    expect(document.querySelector('.modal').textContent).toContain('对 Coo 隐藏');
+    expect(document.querySelector('.modal').textContent).toContain('对 Buggie 隐藏');
     expect(calls.some(call => call.url === '/api/worlds/visibility')).toBe(false);
     answer(false); await flush();
     expect(calls.some(call => call.url === '/api/worlds/visibility')).toBe(false);
-    root.querySelector('[aria-label="对 Coo 隐藏"]').click(); await flush();
+    root.querySelector('[aria-label="对 Buggie 隐藏"]').click(); await flush();
     answer(true); await flush();
     expect(calls.find(call => call.url === '/api/worlds/visibility').body).toEqual({ id: 'alpha', visible: false });
     expect(root.querySelector('.world-list-feedback').textContent).toBe('');
   });
   it('applies a confirmed visibility change to the current conversation without asking again', async () => {
     const { root } = await openWorlds({ driftedWorlds: ['alpha'] }, { worlds: true, worldVisibility: true });
-    root.querySelector('[aria-label="对 Coo 隐藏"]').click(); await flush(100);
+    root.querySelector('[aria-label="对 Buggie 隐藏"]').click(); await flush(100);
     expect(calls.some(call => call.url === '/api/session/reload-prefix')).toBe(false);
     answer(true); await flush(100);
     expect(calls.some(call => call.url === '/api/session/reload-prefix')).toBe(true);
@@ -1403,7 +1403,7 @@ describe('World library and catalog', () => {
     ctx.router.navigate(['world']); window.dispatchEvent(new HashChangeEvent('hashchange')); await flush();
     const remove = [...root.querySelectorAll('.world-blade')].find(item => item.dataset.key === 'world:builtin').querySelector('.iobtn-remove');
     expect(remove.getAttribute('aria-disabled')).toBe('true');
-    expect(remove.title).toBe('随 Coopanion 提供，不能单独删除。');
+    expect(remove.title).toBe('随 Buggie 提供，不能单独删除。');
     remove.click(); await flush();
     expect(document.querySelector('.modal')).toBeNull();
   });

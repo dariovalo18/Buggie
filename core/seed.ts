@@ -11,7 +11,7 @@ import { EARLIER_PERSONAS } from './seed-history.ts';
 
 export const DEPLOYMENT = 'companion';
 export const CONSOLE_PORT = 17788;
-export const DISPLAY_NAME = 'Coo';
+export const DISPLAY_NAME = 'Buggie';
 /** The provider module of the app's endpoints (cortico-provider-coo). */
 const MODULE = 'coo';
 /** The module the endpoints of versions up to 0.1.2 name; it became `coo`. */
@@ -21,11 +21,10 @@ const CUA_ASK = 'ask-once';
 const OLD_CUA_ASK = 'ask-each-turn';
 const SEED_DIR = fileURLToPath(new URL('./seed/', import.meta.url));
 /**
- * The self-descriptions Coo can start from, in the order the introduction offers them: Coo as it ships, four
- * after principles of Cultist Simulator, and the whale's (the GitHub build only). Each is in SEED_DIR/persona/
- * as `<id>.<language>.md`, one per app language.
+ * The self-descriptions the bot can start from: Buggie, the programming assistant, under the id `coo` that
+ * earlier versions seeded. Each is in SEED_DIR/persona/ as `<id>.<language>.md`, one per app language.
  */
-export const PERSONAS = ['coo', 'grail', 'forge', 'heart', 'winter', 'whale'] as const;
+export const PERSONAS = ['coo'] as const;
 export type PersonaId = typeof PERSONAS[number];
 /** The workspace file that holds Coo's self-description (Cormini's). */
 const CONSTITUTION = 'CONSTITUTION.md';

@@ -55,7 +55,7 @@ describe('releaseLetter', () => {
     const letter = releaseLetter(dir, '0.1.11', '0.1.13');
     expect(letter!.version).toBe('0.1.13');
     expect(letter!.text).toContain('信里的段落');
-    expect(letter!.url).toBe('https://github.com/Pal-AI-Lab/Coopanion/blob/v0.1.13/docs/releases/v0.1.13.letter.md');
+    expect(letter!.url).toBe('https://github.com/dariovalo18/Buggie/blob/v0.1.13/docs/releases/v0.1.13.letter.md');
     expect(releaseNotes(dir, '0.1.11', '0.1.13').map((n) => n.version)).toEqual(['0.1.12', '0.1.13']);
     expect(releaseLetter(dir, '0.1.13', '0.1.13')).toBeNull();
   });

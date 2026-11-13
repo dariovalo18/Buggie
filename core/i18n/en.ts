@@ -1,6 +1,6 @@
 /**
  * English: text of the Core process that people read: the introduction in the pet's bubble, the notes
- * on failed requests and updates, Coopanion's own settings, and what the status bubble says. The keys
+ * on failed requests and updates, Buggie's own settings, and what the status bubble says. The keys
  * are zh.ts's; a language other than zh-Hant reads the top-level keys its file leaves out from here.
  */
 import type { CoreText } from './index.ts';
@@ -8,20 +8,20 @@ import type { CoreText } from './index.ts';
 const MAC = process.platform === 'darwin';
 
 const en: CoreText = {
-  /** Coopanion's own settings, on the Habits page and in the advanced settings. */
+  /** Buggie's own settings, on the Habits page and in the advanced settings. */
   settings: {
     autoUpdate: { title: "Automatic updates", description: "Download updates automatically and install them when you quit. Turning this off stops checks and downloads immediately and prevents downloaded updates from installing automatically." },
-    language: { title: 'Language', description: 'The interface and Coo use this language. Takes effect at once.' },
-    telemetry: { title: 'Anonymous usage statistics', description: 'Sends usage counts and settings, never conversations, to help improve Coopanion. The fields are listed in docs/TELEMETRY.md.' },
+    language: { title: 'Language', description: 'The interface and Buggie use this language. Takes effect at once.' },
+    telemetry: { title: 'Anonymous usage statistics', description: 'Sends usage counts and settings, never conversations, to help improve Buggie. The fields are listed in docs/TELEMETRY.md.' },
     contextRing: { title: 'Context ring', description: "Shows a ring in the Chat page's input box with how far the conversation is from being tidied up." },
-    roundsSoft: { title: 'Wrap-up reminder', suffix: 'requests', description: 'After this many model requests in one wake-up, Coo is reminded to finish the current task and end the turn.' },
+    roundsSoft: { title: 'Wrap-up reminder', suffix: 'requests', description: 'After this many model requests in one wake-up, Buggie is reminded to finish the current task and end the turn.' },
     roundsHard: { title: 'Requests per wake-up', suffix: 'requests', description: 'The most model requests in one wake-up; the turn ends when it is reached.' },
   },
 
   /** What the pet's bubble says after several model requests in a row failed. */
   failure: {
     text: (n: number, status: number, reason: string, advice: string) => `My last ${n} requests to the model failed. Error${status ? ` ${status}` : ''}: ${reason}.${advice && ` ${advice}`}`,
-    reasoningReplay: (n: number) => `My last ${n} requests to the model failed: this service requires the thinking to be sent back before every tool call, and Coopanion has that turned off for it. Please report this to the developers: https://github.com/Pal-AI-Lab/Coopanion/issues`,
+    reasoningReplay: (n: number) => `My last ${n} requests to the model failed: this service requires the thinking to be sent back before every tool call, and Buggie has that turned off for it. Please report this to the developers: https://github.com/dariovalo18/Buggie/issues`,
     advice: {
       key: 'Check the API Key on the Start page in settings, where you can test the connection.',
       model: 'Check the model name on the Start page in settings, where you can test the connection.',
@@ -44,7 +44,7 @@ const en: CoreText = {
   quit: 'Quit app',
   noticeLabel: 'App notifications',
 
-  /** The status bubble: the tool Coo is using. */
+  /** The status bubble: the tool Buggie is using. */
   status: {
     read: 'Reading', browse: 'Browsing', memory: 'memory', find: 'Looking for', search: 'Searching', write: 'Writing', edit: 'Editing', append: 'Adding to',
     delete: 'Deleting', moveFile: 'Moving', save: 'Saving', screen: 'Looking at the screen', windows: 'Looking at the open windows', rightClick: 'Right-clicking', doubleClick: 'Double-clicking', click: 'Clicking',
@@ -61,35 +61,23 @@ const en: CoreText = {
     note: (figure: string, preset: string) => `Put on when the pet changes to ${figure}'s "${preset}"`,
   },
 
-  /** The introduction: what Coo says in its bubble, step by step, on the first start. */
+  /** The introduction: what Buggie says in its bubble, step by step, on the first start. */
   guide: {
     /** Answers to "Where did you hear about me?" and the ids the statistics report (docs/TELEMETRY.md); the last one skips. */
     sources: [['Steam', 'steam'], ['YouTube', 'youtube'], ['Reddit', 'reddit'], ['X', 'x'], ['Instagram', 'instagram'], ['TikTok', 'tiktok'], ['GitHub', 'github'], ['A friend', 'friend'], ['Somewhere else', 'other'], ['I\'d rather not say', 'skip']],
-    hello: 'Hi! I\'m Coo, and I live along the bottom of your screen now. Coo...',
-    helloReply: 'Hi, Coo!',
+    hello: 'Hi! I\'m Buggie, your programming assistant, and I live along the bottom of your screen now.',
+    helloReply: 'Hi, Buggie!',
     askName: 'What should I call you?',
     nameSend: 'Call me that',
     gotName: (name: string) => `${name}, got it!`,
     askSource: 'Where did you hear about me?',
-    sourceThanks: 'Oh, I see. Coo...',
-    askPersona: 'What do you think I should be...',
-    /** The persona cards: the words on each, and what Coo says when it is picked. */
-    personas: {
-      coo: { label: 'Small and curious', line: "What's that? Let me take a peek. Coo..." },
-      grail: { label: 'Clingy and greedy', line: 'What are you eating? Share a bite with me. Coo...' },
-      forge: { label: 'Reliable and capable', line: "What needs doing? Leave it to me, it won't take long. Coo." },
-      heart: { label: 'Lively and always there', line: "I'm here! I'll keep you company all day. Coo!" },
-      winter: { label: 'Quiet and wordless', line: '...Mm. Coo.' },
-      whale: { label: 'DeepSeek Chan', line: "Welcome back! What's that? Let me see. Coo..." },
-    },
-    /** The line beside the confirm button; `dress` is the dressing page's name in the settings window, drawn after its icon. */
-    dressHint: { text: 'Change the colours in Dress up', dress: 'Dress up' },
+    sourceThanks: 'Oh, I see.',
     askRoam: 'Should I keep quiet or be lively most of the time? Click one to see what I\'d do.',
-    /** Three cards: the name, how lively, and what Coo says when it is picked. */
+    /** Three cards: the name, how lively, and what Buggie says when it is picked. */
     roam: {
       off: { label: 'Stay put', level: 'Low', line: 'Then I\'ll stand still and move when you call me.' },
       calm: { label: 'Now and then', level: 'Medium', line: 'I\'ll take a stroll now and then and stay put most of the time.' },
-      free: { label: 'Often', level: 'High', line: 'I can run all over the place. Coo...!' },
+      free: { label: 'Often', level: 'High', line: 'I can run all over the place.' },
     },
     roamOk: 'Like that',
     roamDone: 'OK, that\'s how I\'ll be.',
@@ -111,19 +99,19 @@ const en: CoreText = {
     keyLink: (name: string) => `No key yet? Get one from ${name}`,
     keyLater: 'Later',
     connecting: 'Connecting…',
-    keyOk: (name: string, model: string) => `Connected to ${name}${model ? ` (${model})` : ''}! Now I can talk. Coo...`,
+    keyOk: (name: string, model: string) => `Connected to ${name}${model ? ` (${model})` : ''}! Now I can talk.`,
     keyFail: (why: string) => `That didn't connect: ${why}. Is the key complete, and is there credit left on the account? Try pasting it again.`,
     chatgptAsk: "Press the button below and sign in to your ChatGPT account in the browser. What I say counts toward your ChatGPT plan's usage, so keep an eye on your quota.",
     chatgptGo: 'Continue with ChatGPT',
     chatgptWaiting: "Finish signing in in the browser. I'll wait here.",
     chatgptFail: (why: string) => `The sign-in didn't work: ${why}. Try again?`,
-    keyAlready: (connection: string) => `A model is connected already (${connection}). Easy. Coo...`,
+    keyAlready: (connection: string) => `A model is connected already (${connection}). Easy.`,
     keySkipped: 'That\'s fine; I\'ll talk once you\'ve added it. I\'ll ask you again later.',
 
     askModel: (name: string, mb: number) => `To understand what you say, I need to download a speech recognition model (${name}, about ${mb} MB). Download it now?`,
     download: 'Download',
     notNow: 'Not now',
-    downloading: 'Downloading the speech model. Coo...',
+    downloading: 'Downloading the speech model.',
     downloaded: 'Done! Now I can understand what you say.',
     downloadFail: (why: string) => `The download failed: ${why}. You can try again on the Voice input page in settings.`,
     modelLater: 'OK. One click on the Voice input page in settings downloads it later.',

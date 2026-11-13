@@ -54,7 +54,7 @@ const LOOK_EVERY_MS = 1000;
 /** Where the release notes stop being about the app: the download list that ends each file, by the file's language. */
 const NOTES_END: Record<ModelLanguage, RegExp> = { zh: /^## 下载/m, en: /^## Download/m };
 /** Where a letter is read on GitHub: the file at its version's tag. */
-const LETTER_URL = (version: string, file: string) => `https://github.com/Pal-AI-Lab/Coopanion/blob/v${version}/docs/releases/${file}`;
+const LETTER_URL = (version: string, file: string) => `https://github.com/dariovalo18/Buggie/blob/v${version}/docs/releases/${file}`;
 
 export interface NoticeAssembly {
   /** The running version (`COOPANION_VERSION`), `dev` outside a packaged app. */
@@ -214,12 +214,12 @@ const label = (pick: (l: Labels) => Record<string, string>) => (v: unknown, l: L
 const zh = {
   settings: {
     user: { name: '你对对方的称呼' },
-    palette: { name: 'Coo 的配色', say: label((l) => l.palettes) },
-    head: { name: 'Coo 的头饰', say: label((l) => l.accessories) },
-    side: { name: 'Coo 的耳饰', say: label((l) => l.accessories) },
-    glasses: { name: 'Coo 的眼镜', say: label((l) => l.accessories) },
-    neck: { name: 'Coo 的颈饰', say: label((l) => l.accessories) },
-    colors: { name: 'Coo 配件的颜色', changedOnly: true },
+    palette: { name: 'Buggie 的配色', say: label((l) => l.palettes) },
+    head: { name: 'Buggie 的头饰', say: label((l) => l.accessories) },
+    side: { name: 'Buggie 的耳饰', say: label((l) => l.accessories) },
+    glasses: { name: 'Buggie 的眼镜', say: label((l) => l.accessories) },
+    neck: { name: 'Buggie 的颈饰', say: label((l) => l.accessories) },
+    colors: { name: 'Buggie 配件的颜色', changedOnly: true },
     scale: { name: '你在屏幕上的大小', say: (v) => `${v} 倍` },
     theme: { name: '黑白模式', say: named({ dark: '夜间(浅色身体)', light: '白天(深色身体)' }) },
     roam: { name: '你平时走动多少', say: named({ free: '常走动', calm: '多待着', off: '不乱动' }) },
@@ -249,8 +249,8 @@ const zh = {
   settingLine: (name: string, from: string, to: string) => `- ${name}:${from} → ${to}`,
   changed: '[设置变化] 对方刚改了这些设置,已经生效:',
 
-  updatedFrom: (from: string, to: string) => `[应用更新] Coopanion 刚从 ${from} 更新到 ${to}。`,
-  updatedTo: (to: string) => `[应用更新] Coopanion 刚更新到 ${to}。`,
+  updatedFrom: (from: string, to: string) => `[应用更新] Buggie 刚从 ${from} 更新到 ${to}。`,
+  updatedTo: (to: string) => `[应用更新] Buggie 刚更新到 ${to}。`,
   noNotes: '这个版本没有附带更新说明。',
   notesIntro: (several: boolean) => `下面是${several ? '这之间各版本' : '这个版本'}的更新说明,原文是写给对方看的:`,
   notesOutro: '\n挑对方用得上的新功能和修复,用你自己的话告诉对方,不用照念,也不用一次说完。',
@@ -273,7 +273,7 @@ const zh = {
   someone: '对方',
   guideFinished: (name: string) => `[启动引导] ${name}刚在你的气泡里走完了启动引导:定了你怎么称呼对方(「${name}」)、你平时活泼到什么程度、互动时你什么时候回应、用哪家模型服务,也看过了怎么语音输入、按钮和菜单在哪。`,
   guideClosed: (name: string, step: number) => `[启动引导] ${name}在第 ${step} 步关掉了启动引导,后面的步骤没有走。`,
-  guideRecord: '下面是引导里的对话。引导按程序写好的台词走,「Coo:」那几行是程序替你说的:',
+  guideRecord: '下面是引导里的对话。引导按程序写好的台词走,「Buggie:」那几行是程序替你说的:',
   guideAfter: (name: string) => [
     `接下来可以和${name}商量你们之间的设定:你的性格和说话方式、你怎么称呼对方、对方想怎么叫你、希望你平时做什么不做什么。`,
     '- 你的人设是工作区里的 CONSTITUTION.md,每次开新 session 都放进你的系统前缀。商量出结果后你可以自己改它,下一次 session 生效。',
@@ -288,12 +288,12 @@ const en: typeof zh = {
   settings: {
     user: { name: 'what you call the person' },
     // English says the ids, which pet_set takes
-    palette: { name: 'Coo\'s colours' },
-    head: { name: 'Coo\'s headwear' },
-    side: { name: 'Coo\'s ear accessory' },
-    glasses: { name: 'Coo\'s glasses' },
-    neck: { name: 'Coo\'s neckwear' },
-    colors: { name: 'the colours of Coo\'s accessories', changedOnly: true },
+    palette: { name: 'Buggie\'s colours' },
+    head: { name: 'Buggie\'s headwear' },
+    side: { name: 'Buggie\'s ear accessory' },
+    glasses: { name: 'Buggie\'s glasses' },
+    neck: { name: 'Buggie\'s neckwear' },
+    colors: { name: 'the colours of Buggie\'s accessories', changedOnly: true },
     scale: { name: 'your size on screen', say: (v) => `${v}×` },
     theme: { name: 'night or day look', say: named({ dark: 'night (light body)', light: 'day (dark body)' }) },
     roam: { name: 'how much you walk about', say: named({ free: 'free (walks often)', calm: 'calm (mostly stays put)', off: 'off (does not wander)' }) },
@@ -323,8 +323,8 @@ const en: typeof zh = {
   settingLine: (name, from, to) => `- ${name}: ${from} → ${to}`,
   changed: '[settings changed] The person just changed these settings, now in effect:',
 
-  updatedFrom: (from, to) => `[app update] Coopanion was just updated from ${from} to ${to}.`,
-  updatedTo: (to) => `[app update] Coopanion was just updated to ${to}.`,
+  updatedFrom: (from, to) => `[app update] Buggie was just updated from ${from} to ${to}.`,
+  updatedTo: (to) => `[app update] Buggie was just updated to ${to}.`,
   noNotes: ' This version came without release notes.',
   notesIntro: (several) => ` Below are the release notes of ${several ? 'each version in between' : 'this version'}, written for the person to read:`,
   notesOutro: '\nPick the new features and fixes the person can use and tell them in your own words; no need to read them out or to say it all at once.',
@@ -347,7 +347,7 @@ const en: typeof zh = {
   someone: 'the person',
   guideFinished: (name) => `[introduction] ${name} just walked through the introduction in your bubble: settled what you call them ("${name}"), how lively you are day to day, when you respond to touches, and which model service to use, and saw how voice input works and where the buttons and the menu are.`,
   guideClosed: (name, step) => `[introduction] ${name} closed the introduction at step ${step}; the steps after it were not walked through.`,
-  guideRecord: 'Below is the conversation from the introduction. It follows lines the app wrote; the "Coo:" lines were said by the app on your behalf:',
+  guideRecord: 'Below is the conversation from the introduction. It follows lines the app wrote; the "Buggie:" lines were said by the app on your behalf:',
   guideAfter: (name) => [
     `Next you can work out with ${name} how things are between you: your personality and way of talking, what you call them, what they want to call you, what they would like you to do or not do day to day.`,
     '- Your persona is CONSTITUTION.md in your workspace, which goes into your system prefix at the start of every new session. Once you have agreed on something you can edit it yourself; it takes effect from the next session.',

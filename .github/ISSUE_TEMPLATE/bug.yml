@@ -23,8 +23,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Coopanion version / Coopanion 版本
-      description: Shown under the Coopanion wordmark at the top left of the settings window. / 设置窗口左上角 Coopanion 字标下面。
+      label: Buggie version / Buggie 版本
+      description: Shown under the Buggie wordmark at the top left of the settings window. / 设置窗口左上角 Buggie 字标下面。
       placeholder: v0.1.19
     validations:
       required: true
@@ -33,8 +33,8 @@ body:
     attributes:
       label: Diff against the release / 与对应 Release 的 diff
       description: |
-        If you run from source, run this at the repository root against the Pal-AI-Lab/Coopanion release of the version above, for example `git diff --submodule=diff v0.1.22 > release-diff.txt`, and drop the file here. Write `none` if you use an unmodified installer.
-        从源码运行的,在仓库根目录对上面那个版本的 Pal-AI-Lab/Coopanion Release 跑 diff,例如 `git diff --submodule=diff v0.1.22 > release-diff.txt`,把文件拖进来。用没改过的安装包就写「无」。
+        If you run from source, run this at the repository root against the dariovalo18/Buggie release of the version above, for example `git diff --submodule=diff v0.1.22 > release-diff.txt`, and drop the file here. Write `none` if you use an unmodified installer.
+        从源码运行的,在仓库根目录对上面那个版本的 dariovalo18/Buggie Release 跑 diff,例如 `git diff --submodule=diff v0.1.22 > release-diff.txt`,把文件拖进来。用没改过的安装包就写「无」。
     validations:
       required: true
   - type: input
@@ -48,7 +48,7 @@ body:
     id: figure
     attributes:
       label: Figure in use / 当前形象
-      placeholder: Coo / 大肥鱼
+      placeholder: Buggie / 大肥鱼
   - type: input
     id: provider
     attributes:
@@ -59,5 +59,5 @@ body:
     attributes:
       label: Diagnostics / 诊断包
       description: |
-        If Coo misbehaves or reports an error, switch the settings window to advanced mode, open Diagnostics, click Export diagnostics and drop the file here. Keys are masked; conversations and prompts are included as is, so check the file before uploading.
-        Coo 行为不对或报错时,在设置窗口切到高级模式,打开「运行诊断」,点「导出诊断」,把文件拖进这里。密钥已抹掉,对话和提示词原样在里面,上传前自己看一遍。
+        If Buggie misbehaves or reports an error, switch the settings window to advanced mode, open Diagnostics, click Export diagnostics and drop the file here. Keys are masked; conversations and prompts are included as is, so check the file before uploading.
+        Buggie 行为不对或报错时,在设置窗口切到高级模式,打开「运行诊断」,点「导出诊断」,把文件拖进这里。密钥已抹掉,对话和提示词原样在里面,上传前自己看一遍。

@@ -27,8 +27,8 @@ export const S: Partial<typeof en> = {
   renameTitle: 'Cliquer pour renommer',
   renameFailed: (msg: string) => `Nom affiché non enregistré : ${msg}`,
   // avatar.ts
-  changeAvatar: "Changer l'avatar de Coo",
-  uploadAvatar: "Importer et recadrer l'avatar de Coo",
+  changeAvatar: "Changer l'avatar de Buggie",
+  uploadAvatar: "Importer et recadrer l'avatar de Buggie",
   unreadable: 'Impossible de lire cette image',
   cropPreview: "Aperçu du recadrage de l'avatar",
   zoomAria: "Zoom de l'avatar",

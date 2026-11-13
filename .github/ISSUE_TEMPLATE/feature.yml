@@ -1,5 +1,5 @@
 name: Feature request / 功能建议
-description: Something Coopanion cannot do yet. / Coopanion 目前做不到的事。
+description: Something Buggie cannot do yet. / Buggie 目前做不到的事。
 labels: [enhancement]
 body:
   - type: textarea

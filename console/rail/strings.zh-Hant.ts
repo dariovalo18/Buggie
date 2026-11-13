@@ -27,8 +27,8 @@ export const S: Partial<typeof en> = {
   renameTitle: '點擊重新命名',
   renameFailed: (msg: string) => `顯示名稱未能儲存：${msg}`,
   // avatar.ts
-  changeAvatar: '更換 Coo 的頭像',
-  uploadAvatar: '上傳並裁剪 Coo 的頭像',
+  changeAvatar: '更換 Buggie 的頭像',
+  uploadAvatar: '上傳並裁剪 Buggie 的頭像',
   unreadable: '無法讀取這張圖片',
   cropPreview: '頭像裁剪預覽',
   zoomAria: '頭像縮放',

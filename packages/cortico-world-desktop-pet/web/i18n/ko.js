@@ -138,7 +138,7 @@ export default {
   // the dressing page: uninstalling figure packs
   'remove.label': '{name} 제거',
   'remove.title': '{name}을(를) 제거할까요?',
-  'remove.lead': '이 팩의 파일이 삭제되며, 다시 쓰려면 다시 가져와야 합니다. 펫이 사용 중이면 Coo로 돌아갑니다.',
+  'remove.lead': '이 팩의 파일이 삭제되며, 다시 쓰려면 다시 가져와야 합니다. 펫이 사용 중이면 Buggie로 돌아갑니다.',
   'remove.go': '제거',
   'remove.failed': '제거하지 못했습니다',
   'remove.done': '제거했습니다: {name}',

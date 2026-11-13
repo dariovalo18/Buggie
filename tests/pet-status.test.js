@@ -232,11 +232,11 @@ describe('activity in the shared speech bubble', () => {
 
   it('turns an address in speech into a link once it has typed out', () => {
     const p = page();
-    p.onOrder({ t: 'say', id: 's', beats: [{ text: '来 https://github.com/Pal-AI-Lab/Coopanion 点星', actions: [], anchors: [] }] });
+    p.onOrder({ t: 'say', id: 's', beats: [{ text: '来 https://github.com/dariovalo18/Buggie 点星', actions: [], anchors: [] }] });
     p.step(.01); p.step(.5);
     expect(p.bubble.querySelector('a')).toBeNull();
     p.step(3);
-    expect(p.bubble.querySelector('a')?.getAttribute('href')).toBe('https://github.com/Pal-AI-Lab/Coopanion');
+    expect(p.bubble.querySelector('a')?.getAttribute('href')).toBe('https://github.com/dariovalo18/Buggie');
   });
 
   it.each(['ask', 'confirm', 'dialog', 'input', 'listen'])('%s takes priority over activity', (kind) => {

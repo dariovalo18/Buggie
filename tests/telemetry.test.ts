@@ -10,7 +10,7 @@ const ENDPOINT = { vendor: 'vendor-a', model: 'model-a', endpointKind: 'builtin'
 /** Today's `models` and `providerErrors` as the next send would carry them. */
 async function sentDay(feed: (t: Telemetry) => void): Promise<{ models: ModelUse[]; providerErrors: number }> {
   let body: { days: Array<{ models: ModelUse[]; providerErrors: number }> } | null = null;
-  const t = new Telemetry({
+  const t = new Telemetry({ url: 'http://telemetry.test',
     dir: mkdtempSync(join(tmpdir(), 'coo-telemetry-')), version: 'test', enabled: () => true,
     snapshot: () => ({}), extensions: () => [],
     fetchImpl: (async (_url: string, init: RequestInit) => { body = JSON.parse(String(init.body)); return new Response(null, { status: 204 }); }) as typeof fetch,
@@ -77,7 +77,7 @@ describe('telemetry state recovery', () => {
     const file = join(dir, 'telemetry.json');
     writeFileSync(file, content);
     writeFileSync(join(dir, 'telemetry-id'), 'existing-install');
-    const t = new Telemetry({ dir, version: 'test', enabled: () => false, snapshot: () => ({}), extensions: () => [],
+    const t = new Telemetry({ url: 'http://telemetry.test', dir, version: 'test', enabled: () => false, snapshot: () => ({}), extensions: () => [],
       fetchImpl: (async () => { throw new Error('disabled telemetry must not send'); }) as typeof fetch });
     t.start();
     await t.stop();
@@ -91,7 +91,7 @@ describe('telemetry state recovery', () => {
   it('generates a new id when the state file was deleted', async () => {
     const dir = stateDir();
     writeFileSync(join(dir, 'telemetry-id'), 'previous-install');
-    const t = new Telemetry({ dir, version: 'test', enabled: () => false, snapshot: () => ({}), extensions: () => [] });
+    const t = new Telemetry({ url: 'http://telemetry.test', dir, version: 'test', enabled: () => false, snapshot: () => ({}), extensions: () => [] });
     t.start();
     await t.stop();
     expect(JSON.parse(readFileSync(join(dir, 'telemetry.json'), 'utf8')).installId).not.toBe('previous-install');
@@ -108,7 +108,7 @@ describe('telemetry state recovery', () => {
       installId: 'kept', firstDate: '2026-01-01', chatDays: 5, lastChatDate: '2026-10-21', enabled: true, extensions: [],
       day: { date: '2026-10-22', runningMinutes: 30, minutes: [600], counts, models: { key: model } }, days: [], queue: [event],
     }));
-    const t = new Telemetry({ dir, version: 'test', enabled: () => true, snapshot: () => ({}), extensions: () => [],
+    const t = new Telemetry({ url: 'http://telemetry.test', dir, version: 'test', enabled: () => true, snapshot: () => ({}), extensions: () => [],
       now: () => new Date(2026, 9, 22, 12), fetchImpl: (async () => { throw new Error('offline'); }) as typeof fetch });
     t.start();
     await t.stop();

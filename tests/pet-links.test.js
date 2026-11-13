@@ -12,7 +12,7 @@ const html = (text, n) => {
 
 describe('addresses in what the pet says', () => {
   it('ends an address at Chinese text or a space, and leaves out the sentence punctuation', () => {
-    expect(urls('可以来https://github.com/Pal-AI-Lab/Coopanion给我们点个星星！')).toEqual(['https://github.com/Pal-AI-Lab/Coopanion']);
+    expect(urls('可以来https://github.com/dariovalo18/Buggie给我们点个星星！')).toEqual(['https://github.com/dariovalo18/Buggie']);
     expect(urls('See https://example.com/a?b=1&c=2. Then http://x.org/, ok')).toEqual(['https://example.com/a?b=1&c=2', 'http://x.org/']);
   });
 

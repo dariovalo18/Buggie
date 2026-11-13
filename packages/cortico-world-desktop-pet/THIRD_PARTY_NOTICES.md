@@ -30,7 +30,7 @@ DeepSeek 女仆装二创参考 ZipZipPipe。围裙上的标志是 DeepSeek、Ope
 阿里云(通义千问)、月之暗面(Kimi)、MiniMax 的商标图形,归各自的公司所有,只用来标明配色对应哪一家,
 与这些公司没有关联,也不代表其认可。
 
-这些贴图不在本包的 AGPL 授权范围内。它们随 Coopanion 分发,想在别处使用请自行确认原设与各家标志的权利。
+这些贴图不在本包的 AGPL 授权范围内。它们随 Buggie 分发,想在别处使用请自行确认原设与各家标志的权利。
 
 ## 说话声
 
@@ -62,4 +62,4 @@ UNICODE LICENSE V3,全文见 [`src/speech/data/UNICODE-LICENSE`](src/speech/data
 ## 本包的许可
 
 AGPL-3.0-or-later,见 [`LICENSE`](LICENSE);`web/whale/` 的贴图除外,见上。
-并入 Coopanion 之前的版本(独立仓库 `Pal-AI-Lab/cortico-world-desktop-pet` 里的历史)是 MIT。
+并入 Buggie 之前的版本(独立仓库 `Pal-AI-Lab/cortico-world-desktop-pet` 里的历史)是 MIT。

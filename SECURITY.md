@@ -2,10 +2,10 @@
 
 ## Reporting a vulnerability
 
-Report it through [private vulnerability reporting](https://github.com/Pal-AI-Lab/Coopanion/security/advisories/new).
+Report it through [private vulnerability reporting](https://github.com/dariovalo18/Buggie/security/advisories/new).
 Only the maintainers can read the report. Do not open a public issue for it.
 
-Include the affected Coopanion version, your operating system, the steps that reproduce it, and
+Include the affected Buggie version, your operating system, the steps that reproduce it, and
 what an attacker gains.
 
 ## Supported versions
@@ -26,10 +26,10 @@ Out of scope:
 
 ## 中文
 
-发现安全问题请通过[私密漏洞报告](https://github.com/Pal-AI-Lab/Coopanion/security/advisories/new)提交,
+发现安全问题请通过[私密漏洞报告](https://github.com/dariovalo18/Buggie/security/advisories/new)提交,
 只有维护者能看到内容。不要开公开 issue。
 
-报告里写明受影响的 Coopanion 版本、操作系统、复现步骤、攻击者能得到什么。
+报告里写明受影响的 Buggie 版本、操作系统、复现步骤、攻击者能得到什么。
 
 修复合进 `main`,随下一个版本发布,已安装的通过自动更新拿到;旧版本不单独打补丁。
 

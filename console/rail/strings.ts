@@ -36,8 +36,8 @@ const zh = {
   renameTitle: '点击重新命名',
   renameFailed: (msg: string) => `展示名没保存成：${msg}`,
   // avatar.ts
-  changeAvatar: '更换 Coo 的头像',
-  uploadAvatar: '上传并裁剪 Coo 的头像',
+  changeAvatar: '更换 Buggie 的头像',
+  uploadAvatar: '上传并裁剪 Buggie 的头像',
   unreadable: '无法读取这张图片',
   cropPreview: '头像裁剪预览',
   zoomAria: '头像缩放',
@@ -76,8 +76,8 @@ export const en: typeof zh = {
   renameTitle: 'Click to rename',
   renameFailed: (msg: string) => `Display name not saved: ${msg}`,
   // avatar.ts
-  changeAvatar: "Change Coo's avatar",
-  uploadAvatar: "Upload and crop Coo's avatar",
+  changeAvatar: "Change Buggie's avatar",
+  uploadAvatar: "Upload and crop Buggie's avatar",
   unreadable: 'Could not read this image',
   cropPreview: 'Avatar crop preview',
   zoomAria: 'Avatar zoom',

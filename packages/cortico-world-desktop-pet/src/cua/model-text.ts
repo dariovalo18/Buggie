@@ -30,8 +30,8 @@ const zh = {
   engineTimeout: '引擎没有在期限内应答',
   /** What the engine's error codes say; `args` as the engine sent them. */
   engineErrors: {
-    macScreenPermission: () => '没有「屏幕录制」权限:在「系统设置 → 隐私与安全性 → 录屏与系统录音」里打开 Coopanion,再重启它;已经开着的话,先用「−」把 Coopanion 移出列表再加回来:更新后的新版本不认旧授权',
-    macInputPermission: () => '没有「辅助功能」权限:在「系统设置 → 隐私与安全性 → 辅助功能」里打开 Coopanion,再重启它;已经开着的话,先用「−」把 Coopanion 移出列表再加回来:更新后的新版本不认旧授权',
+    macScreenPermission: () => '没有「屏幕录制」权限:在「系统设置 → 隐私与安全性 → 录屏与系统录音」里打开 Buggie,再重启它;已经开着的话,先用「−」把 Buggie 移出列表再加回来:更新后的新版本不认旧授权',
+    macInputPermission: () => '没有「辅助功能」权限:在「系统设置 → 隐私与安全性 → 辅助功能」里打开 Buggie,再重启它;已经开着的话,先用「−」把 Buggie 移出列表再加回来:更新后的新版本不认旧授权',
     macNoKey: (vk) => `Mac 键盘上没有这个键(虚拟键码 ${vk})`,
     x11Display: () => '连不上 X11 显示(DISPLAY 没有设置?):电脑操作在 Linux 上需要 X11 或 XWayland',
     linuxNoScreenshot: () => '截屏失败:X 服务器给不出屏幕画面(Wayland 下的 XWayland 常见),也没有找到截屏工具。请安装 grim、spectacle、scrot 或 ImageMagick 之一,或者改用 X11 会话',
@@ -147,8 +147,8 @@ const en: typeof zh = {
   engineExited: (code) => (code === undefined ? 'The engine process exited' : `The engine process exited (exit code ${code})`),
   engineTimeout: 'The engine did not answer in time',
   engineErrors: {
-    macScreenPermission: () => 'No Screen Recording permission: turn Coopanion on under System Settings → Privacy & Security → Screen & System Audio Recording, then restart it. If it is on already, remove Coopanion from the list with "−" and add it back: an updated version does not inherit the old permission',
-    macInputPermission: () => 'No Accessibility permission: turn Coopanion on under System Settings → Privacy & Security → Accessibility, then restart it. If it is on already, remove Coopanion from the list with "−" and add it back: an updated version does not inherit the old permission',
+    macScreenPermission: () => 'No Screen Recording permission: turn Buggie on under System Settings → Privacy & Security → Screen & System Audio Recording, then restart it. If it is on already, remove Buggie from the list with "−" and add it back: an updated version does not inherit the old permission',
+    macInputPermission: () => 'No Accessibility permission: turn Buggie on under System Settings → Privacy & Security → Accessibility, then restart it. If it is on already, remove Buggie from the list with "−" and add it back: an updated version does not inherit the old permission',
     macNoKey: (vk) => `A Mac keyboard has no such key (virtual-key code ${vk})`,
     x11Display: () => 'Cannot connect to the X11 display (is DISPLAY set?): computer use on Linux needs X11 or XWayland',
     linuxNoScreenshot: () => 'Screenshot failed: the X server gives no screen image (common with XWayland under Wayland) and no screenshot tool was found. Install one of grim, spectacle, scrot or ImageMagick, or switch to an X11 session',

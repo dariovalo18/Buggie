@@ -16,10 +16,10 @@ import { S as ru } from './strings.ru.ts';
 
 const zh = {
   title: '闹钟',
-  desc: 'Coo 设的闹钟。在这里删除后，Coo 会收到通知。',
+  desc: 'Buggie 设的闹钟。在这里删除后，Buggie 会收到通知。',
   setAt: '设定于',
   daily: '每天',
-  empty: 'Coo 现在没有设闹钟。',
+  empty: 'Buggie 现在没有设闹钟。',
   remove: '删除',
   confirmTitle: (when: string) => `删除 ${when} 的闹钟？`,
   failed: (msg: string) => `删除失败：${msg}`,
@@ -35,10 +35,10 @@ const zh = {
 
 export const en: typeof zh = {
   title: 'Alarms',
-  desc: 'Alarms Coo has set. Coo is told when you delete one here.',
+  desc: 'Alarms Buggie has set. Buggie is told when you delete one here.',
   setAt: 'Set at',
   daily: 'Daily',
-  empty: 'Coo has no alarms set.',
+  empty: 'Buggie has no alarms set.',
   remove: 'Delete',
   confirmTitle: (when) => `Delete the alarm at ${when}?`,
   failed: (msg) => `Could not delete: ${msg}`,

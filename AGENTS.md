@@ -1,9 +1,9 @@
 # AGENTS.md
 
-Rules for working in this repository. Coopanion is a desktop app assembled from
+Rules for working in this repository. Buggie is a desktop app assembled from
 [Cortico](vendor/cortico); [vendor/cortico/PHILOSOPHY.md](vendor/cortico/PHILOSOPHY.md) says what
 Cortico is, and [vendor/cortico/AGENTS.md](vendor/cortico/AGENTS.md) governs every change to
-Cortico itself. This file says how work in Coopanion is done. When a request conflicts with
+Cortico itself. This file says how work in Buggie is done. When a request conflicts with
 either, say so before building.
 
 Read vendor/cortico/PHILOSOPHY.md before starting any work here. The submodule is empty in a
@@ -11,7 +11,7 @@ fresh clone or a new worktree until `git submodule update --init` runs.
 
 ## 1. Design stance
 
-Two of PHILOSOPHY.md's rules settle most design questions about how Coo is prompted, given tools,
+Two of PHILOSOPHY.md's rules settle most design questions about how Buggie is prompted, given tools,
 given memory or handed context:
 
 - **Design toward the frontier.** A mechanism that exists only to work around a current model's
@@ -26,7 +26,7 @@ given memory or handed context:
 |---|---|---|
 | Electron main process: tray, settings window, Core child process, updater | `app/` | `app` |
 | Core child process entry: assembly, seed files, the `coopanion` World, telemetry | `core/` | `core` |
-| Settings window: Coopanion's own front end over the WebUI HTTP API | `console/` | `console` |
+| Settings window: Buggie's own front end over the WebUI HTTP API | `console/` | `console` |
 | Desktop pet World, computer use included (`src/cua/`) | `packages/cortico-world-desktop-pet/` | `desktop-pet` |
 | Model provider | `packages/cortico-provider-coo/` | `provider-coo` |
 | Build, staging and packing | `scripts/`, `installer/`, `electron-builder.yml` | `scripts`, `installer` |
@@ -36,7 +36,7 @@ given memory or handed context:
 The World and provider packages are Cortico extensions: their tools, events, config keys, types
 and verbs follow vendor/cortico/AGENTS.md section 2. Chinese UI text keeps Core, Persona, Memory
 and World as proper nouns, calls an extension 扩展, and calls a config value 配置. 参数 is reserved
-for a tool call's arguments. The pet is Coo in UI text; code comments write "bot" when a referent
+for a tool call's arguments. The pet is Buggie in UI text; code comments write "bot" when a referent
 is unavoidable.
 
 ## 3. Boundaries
@@ -53,9 +53,9 @@ is unavoidable.
    ones apart, so a submodule bump that changes one fails the tests.
 3. **Vendor quirks stay in provider-coo.** How one model service deviates from its protocol is
    handled in `packages/cortico-provider-coo`, keyed by its base URL, and never in Cortico.
-4. **Text for the model and text for people are separate.** What Coo reads lives in each
+4. **Text for the model and text for people are separate.** What Buggie reads lives in each
    package's `model-text.ts`, release notes under `docs/releases/` and the seed prompts; what
-   people read lives in the `strings*.ts` and `i18n/` files. Text only Coo reads (tool
+   people read lives in the `strings*.ts` and `i18n/` files. Text only Buggie reads (tool
    descriptions, event labels, the Persona's own lines) is written in English alone. Text
    people also read exists in all eleven languages and changes in all of them in the same
    commit: UI text, and the personas in `core/seed/persona/`. Environment prompts, events and
@@ -115,7 +115,7 @@ that cannot be inferred from the code.
 - [ ] **Accuracy after editing**: Verify retained behavior, conditions, units and boundaries.
   Necessary consequences, error causes and recovery steps must remain accurate and specific.
 
-Coo's own lines (the guide, update and failure bubbles in `core/i18n/`) speak in Coo's voice and
+Buggie's own lines (the guide, update and failure bubbles in `core/i18n/`) speak in Buggie's voice and
 keep it; the checklist still applies to what they say.
 
 ## 5. Tests
@@ -153,7 +153,7 @@ tracked tree. Promote it deliberately when it becomes a tool.
 - Every page under `docs/` and every README of a code unit names, in its first line, the file
   or interface it shadows: its owner. The commit that changes the owner changes the page.
 - User-visible behavior is described in README.md and README_zh.md; a change to it updates both.
-- `docs/releases/` is content: Coo reads it after an update, so it follows section 4.
+- `docs/releases/` is content: Buggie reads it after an update, so it follows section 4.
 - Text without a code owner (plans, migration records, decision history) lives in `scratch/`.
 
 ## 9. Git
@@ -175,7 +175,7 @@ Commits made before this rule do not follow it and are not rewritten.
 
 | Type | Covers |
 |---|---|
-| `feat` | a capability the user, Coo or a pack author did not have |
+| `feat` | a capability the user, Buggie or a pack author did not have |
 | `fix` | wrong behavior; the body names the root cause and what proves it gone |
 | `refactor` | same behavior, different shape: renames, extractions, deletions |
 | `perf` | measured; the body carries the before and the after |

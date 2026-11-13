@@ -8,26 +8,26 @@ import { Cormini } from '../vendor/cortico/bots/cormini/persona/persona.ts';
 import { gitInstalled } from '../vendor/cortico/bots/cormini/persona/workspaceGit.ts';
 import { ARCHIVE_DIR, AUTHOR_COO, PARTNER_DIR, PARTNER_FILE, PARTNER_NOTE, SNAPSHOT_TAG, arrangePartner, coopanionPersona, deliveryLine } from '../core/persona.ts';
 
-const CoopanionPersona = coopanionPersona(Cormini);
+const BuggiePersona = coopanionPersona(Cormini);
 const ctx = { role: 'main', log: { emit: () => {}, warn: () => {}, error: () => {}, info: () => {}, debug: () => {} } } as never;
 const git = (dir: string, ...args: string[]) => execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8' }).trim();
 
 function persona() {
   const dir = mkdtempSync(join(tmpdir(), 'coo-persona-'));
-  const p = new CoopanionPersona({ memoryDir: dir });
+  const p = new BuggiePersona({ memoryDir: dir });
   const tool = (name: string): ToolDef => p.declareSessions()[0]!.tools().find((t) => t.name === name)!;
   return { dir, p, run: (name: string, args: Record<string, unknown>) => tool(name).handler(args, ctx) };
 }
 
-describe.skipIf(!gitInstalled())('Coo’s workspace history', () => {
-  it('commits each write Coo makes, as Coo, and nothing for a write that failed', async () => {
+describe.skipIf(!gitInstalled())('Buggie’s workspace history', () => {
+  it('commits each write Buggie makes, as Buggie, and nothing for a write that failed', async () => {
     const { dir, run } = persona();
     await run('write_file', { path: 'notes/today.md', content: 'tea' });
     await run('edit_file', { path: 'notes/today.md', old_string: 'tea', new_string: 'coffee' });
     await run('edit_file', { path: 'notes/today.md', old_string: 'absent', new_string: 'x' });
     expect(git(dir, 'log', '--format=%an|%s').split('\n')).toEqual([
-      `${AUTHOR_COO.name}|Coo edited notes/today.md`,
-      `${AUTHOR_COO.name}|Coo wrote notes/today.md`,
+      `${AUTHOR_COO.name}|Buggie edited notes/today.md`,
+      `${AUTHOR_COO.name}|Buggie wrote notes/today.md`,
       expect.stringContaining('checkpoint0'),
     ]);
     expect(git(dir, 'status', '--porcelain')).toBe('');
@@ -39,8 +39,8 @@ describe.skipIf(!gitInstalled())('Coo’s workspace history', () => {
     await run('move_file', { from: 'log/2026-09.md', to: `${ARCHIVE_DIR}/log/2026-09.md` });
     await run('move_file', { from: `${ARCHIVE_DIR}/log/2026-09.md`, to: 'log/kept.md', offset: 1, limit: 1 });
     expect(git(dir, 'log', '--format=%s', '-2').split('\n')).toEqual([
-      `Coo moved ${ARCHIVE_DIR}/log/2026-09.md`,
-      'Coo moved log/2026-09.md',
+      `Buggie moved ${ARCHIVE_DIR}/log/2026-09.md`,
+      'Buggie moved log/2026-09.md',
     ]);
     expect(git(dir, 'status', '--porcelain')).toBe('');
   });
@@ -117,7 +117,7 @@ describe('arranging the partner notes', () => {
     expect(arrangePartner(dir)).toBe(false);
   });
 
-  it('renames a partner.md Coo wrote before to PARTNER.md', () => {
+  it('renames a partner.md Buggie wrote before to PARTNER.md', () => {
     const dir = mkdtempSync(join(tmpdir(), 'coo-partner-'));
     writeFileSync(join(dir, 'partner.md'), 'Works late.');
     expect(arrangePartner(dir)).toBe(true);

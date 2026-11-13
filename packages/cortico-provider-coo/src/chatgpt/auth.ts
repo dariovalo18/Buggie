@@ -34,7 +34,7 @@ export interface ChatGPTService {
 
 /** The API the tokens are issued for (`resource`). */
 export const CHATGPT_RESOURCE = 'https://api.openai.com/v1';
-export const CHATGPT_SERVICE: ChatGPTService = { issuer: 'https://auth.openai.com', api: CHATGPT_RESOURCE, appName: 'Coopanion' };
+export const CHATGPT_SERVICE: ChatGPTService = { issuer: 'https://auth.openai.com', api: CHATGPT_RESOURCE, appName: 'Buggie' };
 export const CHATGPT_SCOPES = 'openid profile email offline_access resource.invoke chatgpt.tokens.use.direct';
 /** The scope that lets the tokens bill the ChatGPT plan. */
 export const PLAN_SCOPE = 'chatgpt.tokens.use.direct';

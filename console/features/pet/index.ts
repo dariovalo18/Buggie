@@ -50,7 +50,7 @@ const SOUND_GROUP = 'world:desktop-pet:sound';
 const STATS_GROUP = 'companion';
 const STATS_KEY = 'companion.telemetry';
 const AUTO_UPDATE_KEY = 'companion.autoUpdate';
-const STATS_DOC = 'https://github.com/Pal-AI-Lab/Coopanion/blob/main/docs/TELEMETRY.md';
+const STATS_DOC = 'https://github.com/dariovalo18/Buggie/blob/main/docs/TELEMETRY.md';
 /** Whether the Chat page shows its context ring (features/chat/context.ts), in the `companion` group; off by default. */
 const RING_KEY = 'companion.contextRing';
 /** The app language: a key of the `companion` group, its choices from the Core. */
@@ -59,7 +59,7 @@ const LANGUAGE_OPTIONS = '/api/config/options/coopanion.language';
 /** The bot's name: a key of Core's own group; cleared, it is Coopanion's default (DISPLAY_NAME in core/seed.ts). */
 const NAME_GROUP = 'core';
 const NAME_KEY = 'displayName';
-const DEFAULT_NAME = 'Coo';
+const DEFAULT_NAME = 'Buggie';
 /** The pet panel's page: its `state` gives the default name for the person in the app language and the two rows below. */
 const PET_PAGE = 'world:desktop-pet';
 const K = 'worlds.desktop-pet';

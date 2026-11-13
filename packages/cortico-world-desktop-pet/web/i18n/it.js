@@ -138,7 +138,7 @@ export default {
   // the dressing page: uninstalling figure packs
   'remove.label': 'Disinstalla {name}',
   'remove.title': 'Disinstallare {name}?',
-  'remove.lead': "I file del pacchetto vengono eliminati; importalo di nuovo per usarlo. Se l'animaletto lo indossa, torna a essere Coo.",
+  'remove.lead': "I file del pacchetto vengono eliminati; importalo di nuovo per usarlo. Se l'animaletto lo indossa, torna a essere Buggie.",
   'remove.go': 'Disinstalla',
   'remove.failed': 'Disinstallazione non riuscita',
   'remove.done': 'Disinstallato: {name}',

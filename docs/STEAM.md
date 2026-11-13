@@ -4,7 +4,7 @@
 Steam 版和 GitHub 版用同一份代码，构建时用 `COOPANION_CHANNEL=steam` 区分：
 
 - 由 Steam 安装和更新：不带自动更新（`app/updater.cjs`），设置窗口标题栏不查 GitHub 新版本。
-- 数据在 `%APPDATA%\Coopanion`。Steam 卸载时会删除整个安装目录，所以数据不放在安装目录里。
+- 数据在 `%APPDATA%\Buggie`。Steam 卸载时会删除整个安装目录，所以数据不放在安装目录里。
 - 不内置大肥鱼，大肥鱼作为形象包发在创意工坊。
 - 带 steamworks.js，启动时读取已订阅的创意工坊物品，每个物品当作一个形象包（`app/steam.cjs`）。
 
@@ -37,7 +37,7 @@ Steam 版和 GitHub 版用同一份代码，构建时用 `COOPANION_CHANNEL=stea
 1. `steam-build`：在 Windows 上用 Steam 渠道构建，产物是 `dist/win-unpacked`；
 2. `steam-upload`：用 [game-ci/steam-deploy](https://github.com/game-ci/steam-deploy) 把它上传到 depot，并设到 `staging` 分支。
 
-在 Steam 客户端里，Coopanion 属性 →「测试版」输入 `staging` 的密码，就能装上这个构建检查。确认没问题后，在 Steamworks 的 SteamPipe →「版本」里把这个构建设到 `default` 分支，所有用户就会收到更新。
+在 Steam 客户端里，Buggie 属性 →「测试版」输入 `staging` 的密码，就能装上这个构建检查。确认没问题后，在 Steamworks 的 SteamPipe →「版本」里把这个构建设到 `default` 分支，所有用户就会收到更新。
 
 本地构建：
 

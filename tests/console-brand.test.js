@@ -33,7 +33,7 @@ describe('Christmas wordmark', () => {
     vi.setSystemTime(new Date(year, month - 1, day, 0, 0, 0));
     const brand = mount();
     expect(Boolean(hat(brand))).toBe(visible);
-    expect(brand.getAttribute('aria-label')).toBe('Coopanion');
+    expect(brand.getAttribute('aria-label')).toBe('Buggie');
     if (visible) expect(hat(brand).parentElement).toBe(brand.querySelector('.companion-brand'));
   });
 

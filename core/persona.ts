@@ -233,7 +233,7 @@ ${super.partnerDoc() || `(${PARTNER_FILE} is empty.)`}`;
           this.git.ensureRepo();
           const out = await base.handler(args, ctx);
           if (typeof out === 'string' && out.startsWith(ok)) {
-            const message = `Coo ${verb} ${String(args.path ?? args.from ?? '')}`.trim();
+            const message = `Buggie ${verb} ${String(args.path ?? args.from ?? '')}`.trim();
             const run = () => this.git.commitAllAsync(message, AUTHOR_COO);
             this.commits = this.commits.then(run, run);
             await this.commits;

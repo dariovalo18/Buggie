@@ -39,7 +39,7 @@ describe('first-run seed', () => {
       const constitution = join(home, DEPLOYMENT, 'workspace', 'CONSTITUTION.md');
       writeFileSync(constitution, SEED_0_1_1.replaceAll('\n', eol));
       seed(home, 'zh');
-      expect(readFileSync(constitution, 'utf8')).toContain('「库...」');
+      expect(readFileSync(constitution, 'utf8')).toBe(readFileSync(personaFile('coo', 'zh'), 'utf8'));
     }
   });
 
@@ -65,17 +65,16 @@ describe('first-run seed', () => {
     mkdirSync(join(home, DEPLOYMENT));
     const cfg = join(home, DEPLOYMENT, 'config.json');
     const constitution = join(home, DEPLOYMENT, 'workspace', 'CONSTITUTION.md');
-    const shipped = (id: 'coo' | 'winter', language: 'zh' | 'ja' | 'zh-Hant') => readFileSync(personaFile(id, language), 'utf8');
+    const shipped = (language: 'zh' | 'ja' | 'zh-Hant') => readFileSync(personaFile('coo', language), 'utf8');
     writeFileSync(cfg, JSON.stringify({ language: 'ja' }));
     seed(home, 'zh');
-    expect(readFileSync(constitution, 'utf8')).toBe(shipped('coo', 'ja'));
-    applyPersona(join(home, DEPLOYMENT, 'workspace'), 'winter', 'ja');
+    expect(readFileSync(constitution, 'utf8')).toBe(shipped('ja'));
     writeFileSync(cfg, JSON.stringify({ language: 'zh-Hant' }));
     seed(home, 'zh');
-    expect(readFileSync(constitution, 'utf8')).toBe(shipped('winter', 'zh-Hant'));
+    expect(readFileSync(constitution, 'utf8')).toBe(shipped('zh-Hant'));
     writeFileSync(cfg, JSON.stringify({ language: 'zh' }));
     seed(home, 'zh');
-    const edited = `${shipped('winter', 'zh')}\n我喜欢猫。\n`;
+    const edited = `${shipped('zh')}\n我喜欢猫。\n`;
     writeFileSync(constitution, edited);
     writeFileSync(cfg, JSON.stringify({ language: 'en' }));
     seed(home, 'zh');

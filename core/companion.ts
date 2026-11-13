@@ -134,7 +134,7 @@ function companionGroup(language: Language): ConfigGroup {
     owner: 'persona',
     schema: {
       type: 'object',
-      title: 'Coopanion',
+      title: 'Buggie',
       properties: {
         language: { type: 'string', title: s.language.title, description: s.language.description, enum: [...LANGUAGES], 'x-options': LANGUAGE_OPTIONS, 'x-hot': true },
         [TELEMETRY_KEY]: { type: 'boolean', title: s.telemetry.title, description: s.telemetry.description },
@@ -627,8 +627,6 @@ export async function main(): Promise<void> {
     pet: () => pet,
     console: `http://127.0.0.1:${port}`,
     doneFile: join(deployDir, GUIDE_FILE),
-    workspace: loaded.memoryDir,
-    whale: process.env.COOPANION_CHANNEL !== 'steam',
     openDress: () => process.send?.({ type: 'companion:open', path: '#/dress' }),
     onEnd: (end) => (notice as NoticeWorld | null)?.guideEnded(end),
     track: (type, fields) => stats.event(type, fields),

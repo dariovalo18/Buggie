@@ -27,8 +27,8 @@ export const S: Partial<typeof en> = {
   renameTitle: 'Haz clic para cambiar el nombre',
   renameFailed: (msg: string) => `No se guardó el nombre visible: ${msg}`,
   // avatar.ts
-  changeAvatar: 'Cambiar el avatar de Coo',
-  uploadAvatar: 'Subir y recortar el avatar de Coo',
+  changeAvatar: 'Cambiar el avatar de Buggie',
+  uploadAvatar: 'Subir y recortar el avatar de Buggie',
   unreadable: 'No se pudo leer esta imagen',
   cropPreview: 'Vista previa del recorte del avatar',
   zoomAria: 'Zoom del avatar',

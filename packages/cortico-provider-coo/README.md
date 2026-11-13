@@ -1,7 +1,7 @@
 # cortico-provider-coo (`src/index.ts`)
 
-Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 provider 模块(`kind: "coo"`),
-接 Coopanion 列出的模型服务。按端点的 `baseUrl` 认出是哪一家、哪个平台,平台决定走哪种协议:
+Buggie Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 provider 模块(`kind: "coo"`),
+接 Buggie 列出的模型服务。按端点的 `baseUrl` 认出是哪一家、哪个平台,平台决定走哪种协议:
 
 | 协议 | 请求 | 客户端 |
 |---|---|---|
@@ -61,7 +61,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
   非中文时豆包、百度千帆、阶跃星辰和阶跃 Step Plan(只收中国大陆账号)放在 `more` 里;`defaultRegion`:中文用国内平台,其余用国际平台。
 - **接入流程**:`src/connect.ts` 的 `connectVendor` 经 Cortico WebUI 的 provider 路由给某一家的某个平台建端点
   (密钥存在该端点 `.env` 的 `Vendor.secret` 下,模型按传入的名字,留空用默认)、测试,通过后设为当前端点并恢复运行;
-  已有端点留空 Key 时沿用存着的。Coopanion 的桌面引导和「开始」页都用它。
+  已有端点留空 Key 时沿用存着的。Buggie 的桌面引导和「开始」页都用它。
 
 ## ChatGPT 套餐(`chatgpt` 模块)
 
@@ -71,7 +71,7 @@ ChatGPT 套餐。表里的 `CHATGPT`(`vendors.ts`)给界面列出它,模型、�
 因为接口地址和 OpenAI 相同,`locate` 只按地址认。
 
 - **登录**(`auth.ts`):授权码 + PKCE(S256),系统浏览器打开授权页,回调在 `127.0.0.1` 上系统分配的端口;第一次用
-  `client_id=dynamic_agent_client`、`agent_name_hint=Coopanion` 和端点自己的 `ext_agent_host_id` 注册,回调带回签发的 client id,
+  `client_id=dynamic_agent_client`、`agent_name_hint=Buggie` 和端点自己的 `ext_agent_host_id` 注册,回调带回签发的 client id,
   之后的登录和刷新都用它。ID token 按签发方公布的密钥验签,并核对 issuer、audience、过期时间和 nonce;授予的 scope 里要有
   `chatgpt.tokens.use.direct`。
 - **存放**:都在端点目录的 `.env`,和别家的 API Key 同处,每项一行 `CHATGPT_*`(host id、client id、账号、邮箱、access token、过期时间、
@@ -82,7 +82,7 @@ ChatGPT 套餐。表里的 `CHATGPT`(`vendors.ts`)给界面列出它,模型、�
   function / custom 工具放进一个 namespace(`app`),重放的调用带上它的名字。模型表是 `GET <baseUrl>/models` 里 `visibility: "list"` 的那些,按服务给的顺序。套餐流额外的 `response.metadata` 不进入标准事件解析器。
 - **用量上限**:`subscription_sharing_usage_limit_exceeded`(HTTP 429 或流里的 `response.failed`)留在客户端里处理:日志单独记一条,
   5 分钟不发请求，之后重发，上限持续多久就这样等多久;对 Core 来说只是一个慢请求，不算失败，不进连续失败的计数。新事件抢占时等待结束。
-  已经流出输出的请求和诊断请求(控制台的测试连接)仍以这个 429 失败;Coopanion 的失败气泡不算它。
+  已经流出输出的请求和诊断请求(控制台的测试连接)仍以这个 429 失败;Buggie 的失败气泡不算它。
 - **WebUI 面板方法**:页 `llm:chatgpt` 的面板 `chatgpt`,参数是端点名:`signIn` 回授权 URL,由调用方送到系统浏览器;`state` 报登录进度,
   登录完成后带上套餐的模型名;`signOut` 等进行中的刷新写完，删掉令牌并撤销 refresh token。回调每次登录只接受一次。`connect.ts` 的 `connectChatGPT` 建端点、登录、选模型、测试并设为当前端点。
 
@@ -98,5 +98,5 @@ ChatGPT 套餐。表里的 `CHATGPT`(`vendors.ts`)给界面列出它,模型、�
 }
 ```
 
-0.1.x 叫 `cortico-provider-deepseek`(`kind: "deepseek"`);Coopanion 启动时把旧端点的 `kind` 改成 `coo`。
-在 Coopanion 里它随应用注册;单独使用时按 Cortico 的扩展方式安装(`cortico.kind = provider`,`api = 5`)。
+0.1.x 叫 `cortico-provider-deepseek`(`kind: "deepseek"`);Buggie 启动时把旧端点的 `kind` 改成 `coo`。
+在 Buggie 里它随应用注册;单独使用时按 Cortico 的扩展方式安装(`cortico.kind = provider`,`api = 5`)。

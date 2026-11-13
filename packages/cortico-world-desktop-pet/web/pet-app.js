@@ -1090,7 +1090,7 @@ function openInput() {
     if (!files.length) return;
     e.preventDefault();
     if (it.images.length + it.pending + files.length > BOX_IMAGES) { say(t('bubble.tooManyImages', { max: BOX_IMAGES })); return; }
-    say(prefs.bot?.imagesSeen === false ? t('bubble.imagesUnseen', { bot: prefs.bot.name || 'Coo' }) : '');
+    say(prefs.bot?.imagesSeen === false ? t('bubble.imagesUnseen', { bot: prefs.bot.name || 'Buggie' }) : '');
     for (const file of files) {
       // the order is the paste's, though a big picture takes longer to fit
       const order = ++it.pasted;

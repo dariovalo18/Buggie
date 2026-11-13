@@ -1,17 +1,17 @@
 /**
- * 简体中文:Core 进程给人看的文字,包括桌宠气泡里的启动引导、请求失败与更新提示、Coopanion 的设置项、
+ * 简体中文:Core 进程给人看的文字,包括桌宠气泡里的启动引导、请求失败与更新提示、Buggie 的设置项、
  * 状态气泡的说法。键与 en.ts 相同;繁体中文缺的顶层键读这里。
  */
 const MAC = process.platform === 'darwin';
 
 export default {
-  /** 「习惯」页与高级设置里 Coopanion 自己的设置项 */
+  /** 「习惯」页与高级设置里 Buggie 自己的设置项 */
   settings: {
     autoUpdate: { title: "自动更新", description: "自动下载并在退出时安装更新。关闭后立即停止检查和下载，已下载的更新也不会自动安装。" },
-    language: { title: '语言', description: '界面和 Coo 说话都使用这种语言，修改后立即生效。' },
-    telemetry: { title: '匿名使用统计', description: '发送不含对话内容的使用次数与设置，帮助改进 Coopanion。字段见 docs/TELEMETRY.md。' },
+    language: { title: '语言', description: '界面和 Buggie 说话都使用这种语言，修改后立即生效。' },
+    telemetry: { title: '匿名使用统计', description: '发送不含对话内容的使用次数与设置，帮助改进 Buggie。字段见 docs/TELEMETRY.md。' },
     contextRing: { title: '上下文圆环', description: '在对话页输入框显示一个圆环，表示离整理之前的对话还有多远。' },
-    roundsSoft: { title: '收尾提醒', suffix: '次', description: '单次唤醒请求模型达到此次数时，提醒 Coo 完成当前任务后结束本轮。' },
+    roundsSoft: { title: '收尾提醒', suffix: '次', description: '单次唤醒请求模型达到此次数时，提醒 Buggie 完成当前任务后结束本轮。' },
     roundsHard: { title: '单次唤醒上限', suffix: '次', description: '单次唤醒最多请求模型的次数，达到后结束本轮。' },
   },
 
@@ -19,7 +19,7 @@ export default {
   failure: {
     text: (n: number, status: number, reason: string, advice: string) => `我连着 ${n} 次没能从模型那里拿到回复。错误${status ? ` ${status}` : ''}：${reason}。${advice}`,
     /** 服务商预设关掉了 `sendSyntheticReasoning`,端点却要它而回 400 时的说明 */
-    reasoningReplay: (n: number) => `我连着 ${n} 次没能从模型那里拿到回复：这家服务商要求每次调用工具前都回传思考内容，Coopanion 对它关掉了这一项。请把这件事反馈给开发者：https://github.com/Pal-AI-Lab/Coopanion/issues`,
+    reasoningReplay: (n: number) => `我连着 ${n} 次没能从模型那里拿到回复：这家服务商要求每次调用工具前都回传思考内容，Buggie 对它关掉了这一项。请把这件事反馈给开发者：https://github.com/dariovalo18/Buggie/issues`,
     /** 按状态码选一句接在原因后面;没有对应建议的状态码只说原因 */
     advice: {
       key: '请在设置的「开始」页检查 API Key，那里可以测试连接。',
@@ -44,7 +44,7 @@ export default {
   /** 左栏里应用通知这个 World 的名字 */
   noticeLabel: '应用通知',
 
-  /** 状态气泡:Coo 正在用的工具 */
+  /** 状态气泡:Buggie 正在用的工具 */
   status: {
     read: '在查看', browse: '在翻阅', memory: '记忆', find: '在查找', search: '在搜索', write: '在写入', edit: '在修改', append: '在追加',
     delete: '在删除', moveFile: '在移动', save: '在保存', screen: '在查看屏幕', windows: '在查看打开的窗口', rightClick: '在右击', doubleClick: '在双击', click: '在点击',
@@ -61,35 +61,23 @@ export default {
     note: (figure: string, preset: string) => `桌宠更换为${figure}的「${preset}」时自动换上`,
   },
 
-  /** 启动引导:第一次启动时 Coo 在气泡里一步步说的话 */
+  /** 启动引导:第一次启动时 Buggie 在气泡里一步步说的话 */
   guide: {
     /** 「你是从哪里认识我的?」的回答与统计里的 id;最后一项是跳过。id 见 docs/TELEMETRY.md */
     sources: [['B站', 'bilibili'], ['小红书', 'xiaohongshu'], ['抖音', 'douyin'], ['Steam', 'steam'], ['GitHub', 'github'], ['朋友推荐', 'friend'], ['其他', 'other'], ['不告诉你', 'skip']] as ReadonlyArray<readonly [label: string, id: string]>,
-    hello: '你好呀！我是 Coo，以后就住在你屏幕的底边啦，库...',
-    helloReply: '你好，Coo！',
+    hello: '你好呀！我是 Buggie，你的编程助手，以后就住在你屏幕的底边啦。',
+    helloReply: '你好，Buggie！',
     askName: '我该怎么称呼你？',
     nameSend: '就这么叫',
     gotName: (name: string) => `${name}，记住啦！`,
     askSource: '你是从哪里认识我的？',
-    sourceThanks: '原来是这样，库...',
-    askPersona: '你觉得我应该是...',
-    /** 人设卡片:卡片上的字,点到时 Coo 说的话 */
-    personas: {
-      coo: { label: '小小的、好奇的', line: '这是什么？我凑过去看一眼，库...' },
-      grail: { label: '黏人的、贪心的', line: '你在吃什么呀？也分我一口嘛，库...' },
-      forge: { label: '靠谱的、干练的', line: '要做什么？交给我，一会儿就好，库。' },
-      heart: { label: '活泼的、陪伴的', line: '我来啦！今天也一直陪着你，库！' },
-      winter: { label: '安静的、沉默的', line: '……嗯，库。' },
-      whale: { label: 'DeepSeek 大肥鱼', line: '欢迎回来！这是什么？让我看看，库...' },
-    },
-    /** 确认按钮旁的一行;`dress` 是设置窗口里装扮页的名字,画在图标后 */
-    dressHint: { text: '配色可以在 装扮 中替换', dress: '装扮' },
+    sourceThanks: '原来是这样。',
     askRoam: '平时我该安静一点，还是活泼一点？点一下，看看我会怎样。',
-    /** 三张卡片:名字、活跃程度、点到时 Coo 说的话 */
+    /** 三张卡片:名字、活跃程度、点到时 Buggie 说的话 */
     roam: {
       off: { label: '不乱动', level: '低', line: '那我就乖乖站着，你叫我我再动。' },
       calm: { label: '多待着', level: '中', line: '我会时不时溜达一圈，大多时候待着。' },
-      free: { label: '常走动', level: '高', line: '我可以到处跑来跑去，库...！' },
+      free: { label: '常走动', level: '高', line: '我可以到处跑来跑去！' },
     },
     roamOk: '就这样',
     roamDone: '好，就按这个来。',
@@ -112,20 +100,20 @@ export default {
     keyLink: (name: string) => `还没有 Key？去 ${name} 申请`,
     keyLater: '稍后再填',
     connecting: '正在连接…',
-    keyOk: (name: string, model: string) => `连上 ${name} 了${model ? `（${model}）` : ''}！现在我能说话啦，库...`,
+    keyOk: (name: string, model: string) => `连上 ${name} 了${model ? `（${model}）` : ''}！现在我能说话啦。`,
     keyFail: (why: string) => `没连上：${why}。看看 Key 是不是完整，账户里还有没有余额？再贴一次试试。`,
     /** A ChatGPT plan is signed in in the browser instead of taking a key; the plan's quota is the person's to watch. */
     chatgptAsk: '点击下面的按钮，在浏览器里登录 ChatGPT 账号。我说的话会计入你的 ChatGPT 套餐用量，记得留意额度哦。',
     chatgptGo: '使用 ChatGPT 继续',
     chatgptWaiting: '在浏览器里登录好就回来，我在这里等你。',
     chatgptFail: (why: string) => `没登录上：${why}。再试一次吧？`,
-    keyAlready: (connection: string) => `模型已经连好了（${connection}），省事，库...`,
+    keyAlready: (connection: string) => `模型已经连好了（${connection}），省事。`,
     keySkipped: '没关系，等你填好我再开口。之后我会再来问你。',
 
     askModel: (name: string, mb: number) => `要听懂你说话，我得先下载一个语音识别模型（${name}，约 ${mb} MB，从国内的 ModelScope 下载）。现在下吗？`,
     download: '下载',
     notNow: '先不用',
-    downloading: '正在下载语音模型，库...',
+    downloading: '正在下载语音模型。',
     downloaded: '下好了，现在我听得懂你说话啦！',
     downloadFail: (why: string) => `没下载下来：${why}。之后在设置的「语音输入」页可以再试。`,
     modelLater: '好，之后在设置的「语音输入」页一键就能下。',

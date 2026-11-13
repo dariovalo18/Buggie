@@ -27,8 +27,8 @@ export const S: Partial<typeof en> = {
   renameTitle: '클릭하여 이름 변경',
   renameFailed: (msg: string) => `표시 이름을 저장하지 못했습니다: ${msg}`,
   // avatar.ts
-  changeAvatar: 'Coo 아바타 변경',
-  uploadAvatar: 'Coo 아바타 업로드 및 자르기',
+  changeAvatar: 'Buggie 아바타 변경',
+  uploadAvatar: 'Buggie 아바타 업로드 및 자르기',
   unreadable: '이 이미지를 읽을 수 없습니다',
   cropPreview: '아바타 자르기 미리 보기',
   zoomAria: '아바타 확대/축소',

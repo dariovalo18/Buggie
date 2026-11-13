@@ -10,9 +10,9 @@
 [Cortico](https://github.com/Pal-AI-Lab/Cortico) 的桌宠 World,一个独立的扩展包。
 
 桌宠和语音面板的读取失败显示在内容区域；操作失败显示在发起控件旁。提示组件随面板一起打包，不依赖设置窗口的运行时代码。撤回聊天消息失败的回执携带消息游标，供界面定位对应操作。
-[Coopanion](https://github.com/Pal-AI-Lab/Coopanion) 桌面上的 Coo 就是它。
+[Buggie](https://github.com/dariovalo18/Buggie) 桌面上的 Buggie 就是它。
 
-bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置的 Coo(C 形的身体,两只 0 形的眼睛,两条短腿)、内置的大肥鱼,或者装上的其他包。它用气泡说话、用选项提问、
+bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置的 Buggie(C 形的身体,两只 0 形的眼睛,两条短腿)、内置的大肥鱼,或者装上的其他包。它用气泡说话、用选项提问、
 沿屏幕底边走动、做表情和动作;人可以对它说话(FunASR 或 Whisper 在本机识别,Windows 上也可用系统自带的识别)、打字、点选项、戳它、摸它、
 把它拎起来甩出去,这些都作为事件送回 bot。开了电脑操作时,bot 还能看屏幕、动鼠标键盘(见「电脑操作」)。
 
@@ -23,7 +23,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 | `pet_say(script, images?)` | 冒气泡说话;`【词】` 先做动作再换新气泡,`<词>` 打字到那里时做。`images` 是附件句柄,图片只显示在对话页;只有图片时不要求桌宠窗口在线 | 立即返回,报约显示多久、前面排了多久 |
 | `pet_ask(question, options, allowOwnAnswer)` | 提问气泡,最多 3 个选项,默认再加一格自己写 | 立即返回;回答以 `[answer]` 事件送达 |
 | `pet_move_to(to, run, params?)` | 走(跑)到桌宠所在屏幕横向 0–1 处,或 `left` `center` `right` `cursor`;或去当前形象包自己的目标(见「形象包」的 `moves`),`params` 是那个目标的数值 | 走到或被打断才返回,最多 30 秒;`interruptible`,收到 interrupt 时停在原地并写明位置 |
-| `pet_act(actions)` | 不说话,依次做一串表情或动作 | 立即返回;词表里标着保持的词(Coo 的 `sit` `sleep`)保持到下个动作 |
+| `pet_act(actions)` | 不说话,依次做一串表情或动作 | 立即返回;词表里标着保持的词(Buggie 的 `sit` `sleep`)保持到下个动作 |
 | `pet_set(…)` | 改自己的外观和习惯,见「自己调整」 | 自己能改的立即返回;要问的等对方回答 |
 | `pet_quiet(minutes, sound, roam)` | 临时安静:默认关音效、站着不动,到点恢复,设置不变 | 立即返回 |
 | `pet_see_self()` | 取一张调用那一刻桌宠身体在屏幕上的图:当前形象、打扮、姿态和表情,灰色底,不含气泡和桌面 | 图和一行形象与打扮的名字;桌宠窗口隐藏、没连接,或桌宠页开在浏览器里时失败并写明原因,见「身体图片」 |
@@ -44,7 +44,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 | `desktop-pet.answer` | `[answer] 伙伴回答「问题」:选了第 2 项「…」` / 自己写的 / 关掉没答 | flush,关掉没答为 debounce |
 | `desktop-pet.touch` | `[touch] 伙伴戳了你 3 下` / 摸了摸 / 拎起来甩了出去 / 摔晕 | `worlds.desktop-pet.touch.wakeOn` 让它唤醒的种类 debounce,其余 piggyback |
 | `desktop-pet.talk-key` | `[talk-key] 说话键读不到,伙伴按说话键说的话收不到:原因`(语音输入开着时，每次运行每种原因一条) | flush |
-| `desktop-pet.figure` | `[figure] 你现在的样子:…`(对方换了形象或打扮;bot 用 `pet_set` 自己换的不报) / `[figure] …没能显示出来(原因),你现在是 Coo 的样子` / `[figure] 词表变了。…`;词表或形象自己的目标有变化时都附上 | 换装 debounce,显示失败 flush |
+| `desktop-pet.figure` | `[figure] 你现在的样子:…`(对方换了形象或打扮;bot 用 `pet_set` 自己换的不报) / `[figure] …没能显示出来(原因),你现在是 Buggie 的样子` / `[figure] 词表变了。…`;词表或形象自己的目标有变化时都附上 | 换装 debounce,显示失败 flush |
 
 每条事件的正文前是对方那边的本地时间 `[HH:MM]`;一次运行的第一条、换了日期后的第一条带日期和星期 `[MM-DD 周X HH:MM]`。
 表里是中文版;模型文本是英文时,标签是 `[voice]` `[typed]` `[answer]` `[touch]` `[figure]`,星期写 `Sun` 这样的英文缩写。
@@ -57,7 +57,7 @@ World 在 `127.0.0.1:7797`(被占向上顺延)起一个页面服务:`/pet` 是�
 浏览器的写请求和 WebSocket 只接受本服务的 HTTP 源(含端口);不带 Origin 的本机客户端可以连接。
 宿主启动地址的 fragment 带随机凭据,桌宠窗口和 OBS 画面来源连接时必须提供;公开地址和状态不含凭据。
 桌宠窗口连接被替换后会重新连接。窗口在线时,浏览器预览只接收外观和偏好更新,仍可发送文字、修改偏好和使用运行控制。
-桌宠内置两个形象,和导入的形象包(见「形象包」)一起在装扮页最上面一行选,存在配置 `skin.figure` 里:`coo` 是 Coo,`whale` 是 DeepSeek 大肥鱼
+桌宠内置两个形象,和导入的形象包(见「形象包」)一起在装扮页最上面一行选,存在配置 `skin.figure` 里:`coo` 是 Buggie,`whale` 是 DeepSeek 大肥鱼
 (鲸鱼女仆,`web/whale`,用 `web/rig` 画的 Live2D 式分件模型,八套配色存在 `skin.scheme`,见 [examples/whale](examples/whale/README.md))。
 选大肥鱼时装扮页的配色和配件换成大肥鱼的八套配色;桌宠页第一次用到大肥鱼时才加载这套贴图,只加载选中的那套。
 桌宠窗口是一个 Electron 进程(`host/electron-main.cjs`):透明、无边框、置顶,盖住一块显示器的工作区
@@ -88,17 +88,17 @@ World 进程退出后窗口在 2 秒内自己关掉。
 桌宠身后的屏幕颜色和身体相近时(比如浅色身体停在白色窗口前),身体背后会亮起一圈浅灰色的柔光:
 Windows 上每 0.8 秒用 GDI 取一小块身体周围的屏幕像素来比,其他系统读屏代价大,光圈一直亮着。
 
-人说的话留在 Coo 旁边(`web/pet-app.js`):打字框发出的、识别完成的语音、对话页发来的消息各成一个虚线气泡,最新的在最下面,
-放在 Coo 背朝的一侧并让开 Coo 的气泡;那侧放不下换到另一侧,两侧都放不下就放到 Coo 的气泡上方。识别完成的语音前面画话筒,对话页来的画双向箭头。
-一条话由它之后 Coo 开始的第一句说话或提问回答:回答的气泡还在时,或者还没回答而 Coo 在忙(有状态)、有说话在排队时,这条和更早的都不淡出;
+人说的话留在 Buggie 旁边(`web/pet-app.js`):打字框发出的、识别完成的语音、对话页发来的消息各成一个虚线气泡,最新的在最下面,
+放在 Buggie 背朝的一侧并让开 Buggie 的气泡;那侧放不下换到另一侧,两侧都放不下就放到 Buggie 的气泡上方。识别完成的语音前面画话筒,对话页来的画双向箭头。
+一条话由它之后 Buggie 开始的第一句说话或提问回答:回答的气泡还在时,或者还没回答而 Buggie 在忙(有状态)、有说话在排队时,这条和更早的都不淡出;
 回答的气泡关掉 1 秒后淡出,没有回答的 8 秒后淡出。最多 3 条、合计 6 行,超出时最早的先淡出,即使还在等回答。点一下关掉一条,识别中的那条用「取消」。
 
 气泡尺寸 `worlds.desktop-pet.window.bubbleSize` 缩放所有气泡的宽度、留白、圆角、尾巴、离头顶的距离和连到桌宠的小圆点,边框粗细不变;
 字体尺寸 `window.fontSize` 缩放气泡里的字和同一行的小图标,气泡的宽度不变。两项都是 0.8–1.6 倍,默认 1,不随桌宠的大小变。
-气泡速度 `window.bubbleSpeed` 是 0.5–2 倍,默认 1:Coo 的气泡每秒打 20 乘以它个字,打完后的停留时间除以它,`pet_say` 报的显示时长也按它算。
+气泡速度 `window.bubbleSpeed` 是 0.5–2 倍,默认 1:Buggie 的气泡每秒打 20 乘以它个字,打完后的停留时间除以它,`pet_say` 报的显示时长也按它算。
 点一下台词气泡(链接除外)结束整句:声音停下,这句后面的段不再显示,队列里的下一条接着出;页面回报 `skipped`,之后 `pet_say` 回执里的排队时间从这时起算;提问和确认气泡只能用 × 或回答关掉。
 音量 `worlds.desktop-pet.sounds.volume`(声音组，整数 0–100,默认 100)按百分比调低桌宠页和装扮页的所有声音，说话声也在内，两页之间的响度比例不变。
-桌宠页的音效和说话声按 Coo 在所在显示器上的左右位置分配左右声道(`web/sound.js` 的 `setPan`),pan 值钳在 ±0.5 以内，贴着屏幕边时远侧也听得到;
+桌宠页的音效和说话声按 Buggie 在所在显示器上的左右位置分配左右声道(`web/sound.js` 的 `setPan`),pan 值钳在 ±0.5 以内，贴着屏幕边时远侧也听得到;
 `worlds.desktop-pet.sounds.panByPosition`(声音组，默认开)关闭后居中播放，没有 `StereoPannerNode` 的浏览器里也居中。
 说话声 `worlds.desktop-pet.speech.*`(声音组，默认关)开启后，气泡逐字念成音节库 `web/speech/` 里的短音节，代替「说话」类的叽咕声(叽咕声的音色和音高由形象包的 `voice` 和 `talk` 音效定，见「形象包」)，随这一类音效开关;
 文字怎么念由 World 定(`src/speech`,经 `POST /api/speech`):各语言按读音规则和词典转成国际音标，再取最接近的音节。
@@ -118,7 +118,7 @@ Windows 上每 0.8 秒用 GDI 取一小块身体周围的屏幕像素来比,其�
 
 没有窗口时,在浏览器里打开 `/pet` 也能看到桌宠;窗口连着时浏览器标签页只旁观,不接收指令,
 打字和偏好改动照样送到 World。World 页的「桌宠窗口」灯只看窗口：浏览器页面顶替窗口时灯不亮，说明里写一句浏览器页面已连接;
-窗口里的页面连 Coo 都画不出来(比如拿不到 WebGL)时灯显示出错和原因。
+窗口里的页面连 Buggie 都画不出来(比如拿不到 WebGL)时灯显示出错和原因。
 
 夜间模式存在 `worlds.desktop-pet.theme`,默认 `dark`(浅色身体、深色气泡)。桌宠窗口、`/pet`、`/dress` 和控制台面板里的
 预览都按这一项画,与系统和控制台的深浅色设置无关。
@@ -127,8 +127,8 @@ Windows 上每 0.8 秒用 GDI 取一小块身体周围的屏幕像素来比,其�
 请求模型、等待重试和上下文交接时是想事情,新一轮请求从想事情开始,一批结束(`idle`)时收起。显示什么来自主 session 的
 `outputTap` 流事件里的工具调用,包括其他 World 和 Persona 的工具;参数里的文件名一闭合就显示,不等整份正文流完。
 调用按 item id 和到达顺序记录,连续同类工作合并成「第一个文件 等 N 个」。哪个工具显示成什么由嵌入的应用给出
-(`desktopPetDefinition({ describeTool })`,Coopanion 的在 `core/pet-status.ts`);没给出的工具显示「在忙」,`pet_*` 不显示。
-下表是 Coopanion 给出的样子。
+(`desktopPetDefinition({ describeTool })`,Buggie 的在 `core/pet-status.ts`);没给出的工具显示「在忙」,`pet_*` 不显示。
+下表是 Buggie 给出的样子。
 
 | 类别 | 气泡里的样子与文案 |
 |---|---|
@@ -152,7 +152,7 @@ Windows 上每 0.8 秒用 GDI 取一小块身体周围的屏幕像素来比,其�
 思考持续 0.6 秒才显示;每条至少停留 1.2 秒,只改文件名或数量时原地更新,换类时轻弹,结束用 0.2 秒淡出。
 路径只显示最后一段,细节最多 20 字加省略号;打字内容、闹钟备注、窗口名和坐标不显示,未知工具也不显示名字和参数。
 
-`worlds.desktop-pet.statusBubble` 默认开启,可在「习惯」页关闭「显示 Coo 在忙什么」。关闭时不画状态气泡,
+`worlds.desktop-pet.statusBubble` 默认开启,可在「习惯」页关闭「显示 Buggie 在忙什么」。关闭时不画状态气泡,
 身体的思考表情和思考小圆泡照常。这个开关不在 `pet_set` 的可改项中,也不进入统计。
 页面协议新增 `{ t: 'status', status: { kind, text, detail?, count?, endsAt? } | null }`(`endsAt`:正在运行的等待结束的时刻,Date.now() 毫秒,页面按它倒数);`init` 和 `prefs` 同样带
 `status`、`statusBubble`,供重连时恢复。`status` 变化只发状态消息,不会触发整份偏好广播;原来的 `thinking` 消息由它替代,
@@ -177,7 +177,7 @@ overlay 页按画出的时刻显示各帧，帧与帧隔开的时间和桌宠页
 
 `pet_see_self` 的图由窗口进程从窗口自己画出的内容里截取(`host/portrait.cjs`):桌宠页收到 World 的 `portrait` 指令后报出身体加光晕和头顶余量的那一块
 (OBS 画面里身体的那部分),窗口进程截下来铺到灰色底上,最长边超过 1024 像素时缩到 1024,编码成 PNG 经桌宠页交回 World。
-Coo、精灵图和 Live2D 式分件模型都画在页面的沙箱 frame 里,截取方式相同,形象包不参与。
+Buggie、精灵图和 Live2D 式分件模型都画在页面的沙箱 frame 里,截取方式相同,形象包不参与。
 截的是页面下一帧画出的样子:World 的指令在页面的帧上交给身体,紧排在它前面的 `pet_act` 已经开始做的那个动作会在图里;还在排队的动作不在。
 页面画在身体上方的气泡、右键菜单、悬停按钮、形象轮盘、大小滑条和悬浮说明伸进这一块时,截取的那一帧不画,下一帧恢复。
 鼠标穿透不影响截取;窗口隐藏时页面不画身体,工具失败并写明;浏览器标签页里的桌宠页没有窗口进程,同样失败。
@@ -187,7 +187,7 @@ Coo、精灵图和 Live2D 式分件模型都画在页面的沙箱 frame 里,截�
 桌宠窗口里的页面用麦克风收音,16 kHz 单声道 PCM 经 WebSocket 送到 World,按能量门限切句
 (`src/asr/segmenter.ts`),交给识别引擎,挡掉已知幻觉后作为 `desktop-pet.speech` 投递;应用语言是简体中文且 `asr.simplified` 开着时先把繁体转成简体。
 采集启用回声消除和降噪,关闭自动增益控制(AGC):Windows 上 Chromium 的 AGC 会调整系统麦克风音量。
-说话时桌宠歪头倾听,虚线气泡里边说边显示听到的字,还没定下来的部分是灰色的;用 Whisper 和转写接口时一句说完才出字。识别完成后这个气泡留在 Coo 旁边(见「桌宠窗口」)。
+说话时桌宠歪头倾听,虚线气泡里边说边显示听到的字,还没定下来的部分是灰色的;用 Whisper 和转写接口时一句说完才出字。识别完成后这个气泡留在 Buggie 旁边(见「桌宠窗口」)。
 按键收音(`hold`、`toggle`)时气泡里有「取消」按钮:桌宠页发 `cancel`,World 丢掉这次收音手上的音频、转写队列和已识别的文字,在途的转写落地后也丢掉,发 `listen` 的 `none`,不投递事件;`toggle` 下同时关掉收音。
 
 识别引擎存在 `asr.engine`:
@@ -255,7 +255,7 @@ API Key 不进 config:「语音输入」面板经 `storeSecret` 存进部署 `.e
 
 说话键 `asr.mic.hotkey` 用 `+` 连写组合键(`Ctrl+Space`、`F8`、`Mouse4`),结尾加 `*2` / `*3` 表示连按:前面几下是快速的一按一放(每下不超过 300 ms,两下之间隔不超过 400 ms,按下到松开之间没有别的键或鼠标键按下)。最后一下按下时开始收音(`hold`)或开关收音(`toggle`);`hold` 的说话键和打字键是同一个键(`typeKey.enabled` 打开、两者按的键相同,连按次数不论)时,最后一下按住超过 300 ms 才开始收音。
 共用按键且 `asr.mic.openOnPress` 关闭时,World 在内存里保留最近 18 帧音频(360 ms,覆盖从实际按下到确认长按的最长间隔:300 ms 判定,加上发现按下和发现超时各最多晚一次 30 ms 轮询,按 20 ms 帧向上取整),确认长按后先把这些帧交给分句器,再接后续音频;快速双击不进入识别。松开、取消、改绑、关闭语音或麦克风断开时清空缓存,超过这段时限的帧也不补入下一句。
-默认 `LeftAlt*2`:快速按一下左 Alt(Mac 上是左 Option),紧接着按住说话。按完快速的那一下,World 给桌宠页发 `listen` 的 `ready`,Coo 先抬头看一眼,按住时立刻进入聆听。
+默认 `LeftAlt*2`:快速按一下左 Alt(Mac 上是左 Option),紧接着按住说话。按完快速的那一下,World 给桌宠页发 `listen` 的 `ready`,Buggie 先抬头看一眼,按住时立刻进入聆听。
 在哪个窗口里按都算;「语音输入」面板的说话键按钮录下组合键,旁边的下拉框选「双击再按住」(`*2`)或「直接按住」(不带 `*`),录键时保留当前的按法。桌宠麦克风按钮的角标显示说话键的简写(`Alt×2`、`F8`、`M4`),一直收音时显示 `AUTO`。
 Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 CoreGraphics 的 `CGEventSourceKeyState`,要在「系统设置 → 隐私与安全性 → 输入监控」里允许,第一次会弹出询问;Linux 上轮询 X11 的 `XQueryKeymap`(Wayland 下经 XWayland,只在 X11 窗口有键盘焦点时读得到;鼠标侧键读不到)。说话键或打字键按住期间,每次轮询还读一遍其余的键和鼠标键,判断这一下是不是组合键的一部分。读不到时不识别说话,面板上写明原因。
 `asr.mic.deviceId` 选麦克风,留空用系统默认;设备列表由桌宠页上报,设备名称需要麦克风权限。
@@ -270,8 +270,8 @@ Windows 上桌宠窗口从前台窗口拿走键盘，打字框关掉后还回去
 
 ## 形象包
 
-桌宠的身体都来自形象包,Coo 也是一个。形象包是一个目录,根上有 `figure.json`;内置的 Coo 在 `web/coo/`、大肥鱼在 `web/whale/`,
-其余的从数据目录的 `figures/<目录>/` 和应用给的 `packRoots` 里找。`skin.figure` 是包的 id,`skin.scheme` 是它的打扮(Coo 的打扮存在 skin 自己的配色和配件字段里)。
+桌宠的身体都来自形象包,Buggie 也是一个。形象包是一个目录,根上有 `figure.json`;内置的 Buggie 在 `web/coo/`、大肥鱼在 `web/whale/`,
+其余的从数据目录的 `figures/<目录>/` 和应用给的 `packRoots` 里找。`skin.figure` 是包的 id,`skin.scheme` 是它的打扮(Buggie 的打扮存在 skin 自己的配色和配件字段里)。
 
 包里的代码只在沙箱里跑:桌宠页把它放进 `/figure-frame?pack=<id>`,这个页面的 CSP 把它设成不透明源,网络连接只许 `fetch` 这个包自己目录下的文件(见下文「读包里的文件」;内置包哪里都连不了),
 脚本和图片只能从桌宠服务读,和桌宠页之间只有 postMessage(`web/figure-frame.js`、`web/body-host.js`)。
@@ -310,7 +310,7 @@ Windows 上桌宠窗口从前台窗口拿走键盘，打字框关掉后还回去
 工厂按 `factory(base, { model, scheme, kit, loadImage, asset, host })` 调用,返回一个身体;契约写在 `web/figure-frame.js` 开头。
 用 kit 的包只要 `kit.createBody(host, { figure, words })`:`figure` 每画一帧调一次,`words` 是 kit 本身没有的词怎么做。
 桌宠窗口隐藏时页面照常推进身体(走路照常走到、词照常做完),但不画。
-`examples/whale/README.md` 是写形象包的完整说明。20 秒内没准备好、或者跑的时候抛错,桌宠换回 Coo,并告诉 bot 词表的变化。
+`examples/whale/README.md` 是写形象包的完整说明。20 秒内没准备好、或者跑的时候抛错,桌宠换回 Buggie,并告诉 bot 词表的变化。
 
 ### 读包里的文件
 
@@ -325,7 +325,7 @@ export async function createMyBody(base, { asset, kit, host }) {
 ```
 
 只读得到本包目录(`/packs/<id>/`)以下的文件,别的包、桌宠服务的接口和外网都会被拒绝。
-Coopanion 0.2.13 及更早的版本不许任何 `fetch`。要让包在这些版本上也能用,把同一个文件再打一份成 JS 模块
+Buggie 0.2.13 及更早的版本不许任何 `fetch`。要让包在这些版本上也能用,把同一个文件再打一份成 JS 模块
 (例如 `model.moc3.js`,内容是 `export default '<文件的 base64>';`),`fetch` 失败时改读它:
 
 ```js
@@ -386,7 +386,7 @@ kit 走到它给的舞台坐标;返回 null 或没给这个目标时按 `busy` �
 | macOS(未实测) | `CGWindowListCopyWindowInfo`,从前到后,只取 `kCGWindowLayer` 为 0 的普通窗口,只读 `kCGWindowBounds` 和编号 `kCGWindowNumber`,不读窗口名;读名字才要「录屏」权限,所以预计不需要它,也不会去申请 | 点,即 macOS 上的 DIP,不用换算 |
 | Linux X11(未实测) | 窗口管理器的 `_NET_CLIENT_LIST_STACKING`;补回管理器画的边框(`_NET_FRAME_EXTENTS`),去掉自绘边框的阴影(`_GTK_FRAME_EXTENTS`);跳过隐藏的、在别的工作区的、停靠栏和桌面;编号用 X11 窗口号,前台窗口取 `_NET_ACTIVE_WINDOW` | 整个 X 屏幕的物理像素,所有显示器同一个缩放,换成 DIP |
 
-Coopanion 在 Linux 上固定跑在 X11 上;Wayland 会话里经 XWayland 只看得到 X11 程序的窗口,原生 Wayland 程序的窗口不在里面。
+Buggie 在 Linux 上固定跑在 X11 上;Wayland 会话里经 XWayland 只看得到 X11 程序的窗口,原生 Wayland 程序的窗口不在里面。
 读不了的地方(没有 X 服务器、原生调用加载不了)和浏览器标签里没有 `ledges` 和 `windows`,包要能在没有它们时照常运行。
 
 ### 导入
@@ -404,7 +404,7 @@ Coopanion 在 Linux 上固定跑在 X11 上;Wayland 会话里经 XWayland 只看
 
 `/api/figures` 给每个包标上 `removable`:只有装在 `packDir`(数据目录的 `figures/`)里的包能卸载,内置形象和 `packRoots` 其余目录里的包不能。
 装扮页上能卸载的包,悬停或聚焦卡片时右上角出现删除按钮,确认后 `POST /api/figures/remove`(`{ id }`)删掉这个包所在的整个文件夹;
-删的是正在用的形象时,装扮页把装扮换回 Coo。内置的、不在 `packDir` 里的或不存在的 id 返回 400 和原因,不删任何文件。
+删的是正在用的形象时,装扮页把装扮换回 Buggie。内置的、不在 `packDir` 里的或不存在的 id 返回 400 和原因,不删任何文件。
 
 ### 形象包兼容承诺
 
@@ -430,7 +430,7 @@ Coopanion 在 Linux 上固定跑在 X11 上;Wayland 会话里经 XWayland 只看
 `pet_set` 让 bot 改自己的外观和习惯,每项要么直接改,要么先在气泡里征得对方同意、同意了才改(`src/self.ts`)。
 哪项归哪档由 `worlds.desktop-pet.selfAdjust`(「习惯」页的「自主配置权限」)定:
 
-- `default`(默认):形象和打扮(Coo 的配色和配件也是打扮)、走动多少、呼噜多久直接改;音效、大小、气泡尺寸、字体尺寸、夜间模式、悬停按钮、对对方的称呼先征得同意;
+- `default`(默认):形象和打扮(Buggie 的配色和配件也是打扮)、走动多少、呼噜多久直接改;音效、大小、气泡尺寸、字体尺寸、夜间模式、悬停按钮、对对方的称呼先征得同意;
 - `any`:都直接改;
 - `custom`:按 `selfAdjustCustom` 逐项定,`true` 直接改,`false` 先征得同意;
 - `off`:都不能改,`pet_quiet` 也不行。
@@ -575,10 +575,10 @@ macOS 的辅助功能查询每次最多等待 200ms,超时后仍报告前台程�
 `onCreate` 拿到 World 实例,应用可以调 `world.confirm(问题, [同意, 不同意])` 弹一个两选项气泡(或 `[同意, 以后都同意, 不同意]` 三选项,中间那项答 `always`),
 结果是 `yes` / `no` / `dismissed` / `timeout` / `unavailable`(没有桌宠页),不会作为事件送给 bot。
 确认排在还没放完的台词后面,这些台词改成六倍速打字、不出声、每拍停 1 秒;气泡露面时响一声提醒(`sounds.alert`,只响一次),页面回报 `confirm-shown`,从这时起 60 秒没人答就是 `timeout`,
-一直没露面时从发出起 3 分钟算 `timeout`;超时时 World 发 `ask-close`,页面把这条确认从队列或气泡上收掉。确认气泡停在露面的位置,Coo 走开时不跟着走,确认期间不弹悬停按钮。
+一直没露面时从发出起 3 分钟算 `timeout`;超时时 World 发 `ask-close`,页面把这条确认从队列或气泡上收掉。确认气泡停在露面的位置,Buggie 走开时不跟着走,确认期间不弹悬停按钮。
 
-应用自己的一问一答(比如首次启动的引导)用 `world.dialog(步骤)`:Coo 在气泡里说一句,下面接一个输入组件,
-回答同样只交给调用方。组件有按钮行(可带一个反复演示按法的按键帽)、可试选的卡片(可带图标或一张 `data:image/…` 图,比如服务的标志,名字下可带一行小字 `note`;选中时 Coo 当场演示对应动作:站着、溜达、跑来跑去)、
+应用自己的一问一答(比如首次启动的引导)用 `world.dialog(步骤)`:Buggie 在气泡里说一句,下面接一个输入组件,
+回答同样只交给调用方。组件有按钮行(可带一个反复演示按法的按键帽)、可试选的卡片(可带图标或一张 `data:image/…` 图,比如服务的标志,名字下可带一行小字 `note`;选中时 Buggie 当场演示对应动作:站着、溜达、跑来跑去)、
 文本框(可以是密钥框,带一个外链和一个「以后再说」)、进度条(调用方用 `update({ progress })` 推进,`close()` 收起)。
 `step` 在气泡顶上画步骤点,`closable` 画一个关闭钮,`back` 在步骤点前画一个以它为文字的按钮，点了结果是 `{ back: true }`;页面不在时结果是 `{ unavailable: true }`,页面回来后调用方重发即可。
 `controls.guide` 借出后,控制台的 `pet.guide` 面板方法会调它,应用借此重放引导。
@@ -591,7 +591,7 @@ macOS 的辅助功能查询每次最多等待 200ms,超时后仍报告前台程�
 
 - 页面发 `send` 的文字和图片作为 `desktop-pet.message` 投递;送达前在页面上排队,`now` 让它以 interrupt 立即送达,`withdraw` 撤回(需要宿主提供 `promotePending` / `withdrawPending`);World 的 `onEventsSettled` 告诉页面何时送达。
 - `pet_say` 的每一拍、`pet_ask` 的问题、两句话之间调用过的工具名记为 `desktop-pet.self` 事件,只落库不投递;`hello` 时 World 从事件库还原历史,排过队的消息放在送达的位置。`pet_say` 的图片按句柄读出字节后重新附在这条事件上,存成 `log:` 附件。页面经控制台的 `/api/blob` 取消息里的图片。
-- 页面发出的消息交给 bot 后,World 给桌宠页发 `said`(`via: 'chat'`、文字、图片数、事件游标),桌宠把它留在 Coo 旁边;撤回时发 `said-withdrawn`,桌宠关掉那条。
+- 页面发出的消息交给 bot 后,World 给桌宠页发 `said`(`via: 'chat'`、文字、图片数、事件游标),桌宠把它留在 Buggie 旁边;撤回时发 `said-withdrawn`,桌宠关掉那条。
 - `pet_ask` 在页面上也能回答,回答后桌宠上的气泡关掉。页面还收到 Core 的运行阶段(`phase`)与暂停状态。
 - `controls.openChat` 借出后,打字气泡多一个展开钮,带着草稿打开对话页;环境提示词的 `{{pet.chat}}` 也只在这时说明对话页。
 - `controls.openWorlds` 借出后,悬停按钮多一个可选的「我的 World」,点一下打开应用的 World 列表;没借出时设置里选了它也不显示。
@@ -625,5 +625,5 @@ npx tsx scripts/check-voice.ts <模型根> <语音.wav> [应用语言]   # 连�
 
 `tsconfig.json` 与 `vitest.config.ts` 把 `cortico/*` 指到主仓库的 `vendor/cortico/src/`;
 装进 Cortico 运行时由框架的模块钩子解析。网页部分不依赖 World:`web/kit/` 是现成的身体(动作模拟、表情、粒子,
-和画大肥鱼用的 rig),`web/coo/` 是 Coo 的造型、配件与形象包入口,`web/sound.js` 是合成音效与包自带音频的播放,
+和画大肥鱼用的 rig),`web/coo/` 是 Buggie 的造型、配件与形象包入口,`web/sound.js` 是合成音效与包自带音频的播放,
 `web/body-host.js` 是桌宠页、装扮页这一侧的身体代理。

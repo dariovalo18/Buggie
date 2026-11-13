@@ -2,10 +2,10 @@ import type { en } from './strings.ts';
 
 export const S: Partial<typeof en> = {
   title: 'Alarmes',
-  desc: "Les alarmes que Coo a fixées. Coo est prévenu quand vous en supprimez une ici.",
+  desc: "Les alarmes que Buggie a fixées. Buggie est prévenu quand vous en supprimez une ici.",
   setAt: 'Créée le',
   daily: 'Tous les jours',
-  empty: "Coo n'a aucune alarme.",
+  empty: "Buggie n'a aucune alarme.",
   remove: 'Supprimer',
   confirmTitle: (when) => `Supprimer l'alarme de ${when} ?`,
   failed: (msg) => `Suppression impossible : ${msg}`,

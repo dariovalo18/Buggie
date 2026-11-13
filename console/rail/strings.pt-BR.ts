@@ -27,8 +27,8 @@ export const S: Partial<typeof en> = {
   renameTitle: 'Clique para renomear',
   renameFailed: (msg: string) => `Nome de exibição não salvo: ${msg}`,
   // avatar.ts
-  changeAvatar: 'Trocar o avatar do Coo',
-  uploadAvatar: 'Enviar e recortar o avatar do Coo',
+  changeAvatar: 'Trocar o avatar do Buggie',
+  uploadAvatar: 'Enviar e recortar o avatar do Buggie',
   unreadable: 'Não foi possível ler esta imagem',
   cropPreview: 'Prévia do recorte do avatar',
   zoomAria: 'Zoom do avatar',

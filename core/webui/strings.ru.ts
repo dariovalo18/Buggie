@@ -2,10 +2,10 @@ import type { en } from './strings.ts';
 
 export const S: Partial<typeof en> = {
   title: 'Будильники',
-  desc: 'Будильники, которые поставил Coo. Если удалить будильник здесь, Coo получит уведомление.',
+  desc: 'Будильники, которые поставил Buggie. Если удалить будильник здесь, Buggie получит уведомление.',
   setAt: 'Поставлен',
   daily: 'Каждый день',
-  empty: 'У Coo нет будильников.',
+  empty: 'У Buggie нет будильников.',
   remove: 'Удалить',
   confirmTitle: (when) => `Удалить будильник на ${when}?`,
   failed: (msg) => `Не удалось удалить: ${msg}`,

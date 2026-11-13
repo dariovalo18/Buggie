@@ -54,7 +54,7 @@ export default {
   'action.sizeLabel': 'Pet size',
   'action.dress': 'Dress up',
   'action.worlds': 'My Worlds',
-  'action.hide': 'Hide the pet (show Coo again from the tray icon)',
+  'action.hide': 'Hide the pet (show Buggie again from the tray icon)',
   'menu.cancel': 'Cancel',
   'menu.resume': 'Resume',
   'menu.pause': 'Pause',
@@ -145,7 +145,7 @@ export default {
   // the dressing page: uninstalling figure packs
   'remove.label': 'Uninstall {name}',
   'remove.title': 'Uninstall {name}?',
-  'remove.lead': "The pack's files are deleted; import it again to use it. A pet wearing this pack changes back to Coo.",
+  'remove.lead': "The pack's files are deleted; import it again to use it. A pet wearing this pack changes back to Buggie.",
   'remove.go': 'Uninstall',
   'remove.failed': 'Could not uninstall',
   'remove.done': 'Uninstalled: {name}',

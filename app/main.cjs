@@ -72,7 +72,7 @@ const WINDOW_ICON = join(ICONS, process.platform === 'win32' ? 'icon.ico' : 'ico
  * The AppUserModelID, by which Windows groups taskbar buttons and picks their icon: electron-builder.yml's appId for
  * a packaged build, an id of its own for a run from source, which would otherwise lend the installed app electron.exe's icon.
  */
-const APP_ID = app.isPackaged ? 'ai.pal.coopanion' : 'ai.pal.coopanion.dev';
+const APP_ID = app.isPackaged ? 'io.github.dariovalo18.buggie' : 'io.github.dariovalo18.buggie.dev';
 /** The build's channel and, for `steam`, its Steam app id (see the module header). */
 const BUILD = JSON.parse(readTextFile(join(APP_ROOT, 'package.json'))).coopanion ?? {};
 const STEAM = BUILD.channel === 'steam';
@@ -82,11 +82,11 @@ const PET_HOST = process.argv.includes('--pet-host');
 const INSTALLED = app.isPackaged && process.platform === 'win32' && !STEAM && !PORTABLE && !process.env.CORTICO_COMPANION_DATA;
 const PROGRAM_DIR = dirname(process.execPath);
 const BESIDE = join(PROGRAM_DIR, 'data');
-const DATA_RECORD = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Coopanion', 'data-location.json') : null;
+const DATA_RECORD = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Buggie', 'data-location.json') : null;
 const located = INSTALLED && DATA_RECORD ? locateData({ programDir: PROGRAM_DIR, record: readRecord(DATA_RECORD) }) : null;
 const DATA = process.env.CORTICO_COMPANION_DATA
   || (!app.isPackaged ? join(APP_ROOT, 'build', 'data')
-    : MAC || LINUX || STEAM ? join(app.getPath('appData'), 'Coopanion') : located?.use ?? BESIDE);
+    : MAC || LINUX || STEAM ? join(app.getPath('appData'), 'Buggie') : located?.use ?? BESIDE);
 
 /**
  * Asks which data to use when none is beside the program (data-dir.cjs) and binds the record to this program
@@ -98,7 +98,7 @@ function askDataLocation({ ask, record }) {
   const language = configuredLanguage(join(record.data, 'home')) ?? systemLanguage(app);
   const t = textOf(language);
   const when = new Date(record.startedAt).toLocaleString(language);
-  const box = (options) => dialog.showMessageBoxSync({ title: 'Coopanion', noLink: true, defaultId: 0, ...options });
+  const box = (options) => dialog.showMessageBoxSync({ title: 'Buggie', noLink: true, defaultId: 0, ...options });
   const bind = (data) => {
     writeRecord(DATA_RECORD, { data, program: PROGRAM_DIR, startedAt: record.startedAt });
     return true;
@@ -126,12 +126,12 @@ function askDataLocation({ ask, record }) {
 }
 if (located?.ask && !PET_HOST) {
   // Chromium's own files for these dialogs go to the temp directory
-  app.setPath('userData', join(app.getPath('temp'), 'Coopanion'));
+  app.setPath('userData', join(app.getPath('temp'), 'Buggie'));
   app.whenReady().then(() => {
     if (askDataLocation(located)) app.relaunch();
     app.exit(0);
   }).catch((err) => {
-    dialog.showErrorBox('Coopanion', String(err?.message ?? err));
+    dialog.showErrorBox('Buggie', String(err?.message ?? err));
     app.exit(1);
   });
   return;
@@ -154,12 +154,12 @@ function dataWritable() {
 }
 if (INSTALLED && !dataWritable()) {
   // Chromium's own files for this one dialog go to the temp directory
-  app.setPath('userData', join(app.getPath('temp'), 'Coopanion'));
+  app.setPath('userData', join(app.getPath('temp'), 'Buggie'));
   app.whenReady().then(() => {
     const { configuredLanguage, systemLanguage, textOf } = require('./i18n/index.cjs');
     const t = textOf(configuredLanguage(join(DATA, 'home')) ?? systemLanguage(app));
-    const suggested = join(process.env.LOCALAPPDATA ?? app.getPath('home'), 'Programs', 'Coopanion');
-    dialog.showErrorBox('Coopanion', t.dataNotWritable(DATA, suggested));
+    const suggested = join(process.env.LOCALAPPDATA ?? app.getPath('home'), 'Programs', 'Buggie');
+    dialog.showErrorBox('Buggie', t.dataNotWritable(DATA, suggested));
     app.exit(1);
   });
   return;
@@ -173,7 +173,7 @@ if (INSTALLED && !dataWritable()) {
  * be the one in use, so a dialog asks first (askRestoreStranded); taking the old one back then happens on the
  * next start, before anything here is open, and keeps this one beside it as data-replaced-<time>.
  */
-const STRANDED_DIR = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Programs', 'Coopanion') : null;
+const STRANDED_DIR = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Programs', 'Buggie') : null;
 const STRANDED_DATA = STRANDED_DIR && join(STRANDED_DIR, 'data');
 /** The answer to that dialog: `restore` or `keep`. */
 const STRANDED_CHOICE = join(DATA, 'stranded-data-choice');
@@ -182,7 +182,7 @@ const STRANDED_CHOICE = join(DATA, 'stranded-data-choice');
 function restoreStrandedData() {
   if (!STRANDED_DATA || STRANDED_DATA.toLowerCase() === DATA.toLowerCase()) return false;
   // an install still living there is its own install, not a leftover
-  if (!existsSync(join(STRANDED_DATA, 'home')) || existsSync(join(STRANDED_DIR, 'Coopanion.exe'))) return false;
+  if (!existsSync(join(STRANDED_DATA, 'home')) || existsSync(join(STRANDED_DIR, 'Buggie.exe'))) return false;
   const choice = existsSync(STRANDED_CHOICE) ? readTextFile(STRANDED_CHOICE) : '';
   if (choice === 'keep') return false;
   if (choice !== 'restore' && existsSync(join(DATA, 'home'))) return true;
@@ -261,7 +261,7 @@ function dataHoldsLinks() {
   return true;
 }
 const LINKS = dataHoldsLinks();
-const PNPM_DIR = LINKS ? join(DATA, 'pnpm') : join(process.env.LOCALAPPDATA ?? app.getPath('temp'), 'Coopanion', 'pnpm');
+const PNPM_DIR = LINKS ? join(DATA, 'pnpm') : join(process.env.LOCALAPPDATA ?? app.getPath('temp'), 'Buggie', 'pnpm');
 
 const core = new CoreHost({
   appRoot: APP_ROOT,
@@ -423,7 +423,7 @@ function forward(request, url, origin) {
 }
 
 /** The latest Coopanion release, for the update status in the settings window's title bar. */
-const RELEASE_CHECK = 'https://api.github.com/repos/Pal-AI-Lab/Coopanion/releases/latest';
+const RELEASE_CHECK = 'https://api.github.com/repos/dariovalo18/Buggie/releases/latest';
 /** Images of the extension market: package icons and screenshots of the official index, and GitHub avatars. */
 const MARKET_IMAGES = ['https://raw.githubusercontent.com/Pal-AI-Lab/cortico-extensions/', 'https://avatars.githubusercontent.com/'];
 const isLocal = (url) => /^(https?|wss?):\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?\//.test(url);
@@ -491,7 +491,7 @@ function openSettings(path = '') {
   const area = screen.getPrimaryDisplay().workAreaSize;
   settings = new BrowserWindow({
     ...readSettingsSize(join(userData, 'settings-size.json'), area),
-    title: 'Coopanion', icon: WINDOW_ICON, autoHideMenuBar: true, show: false,
+    title: 'Buggie', icon: WINDOW_ICON, autoHideMenuBar: true, show: false,
     ...settingsChromeOptions(process.platform),
     backgroundColor: '#f4f5f4',
     webPreferences: { partition: SETTINGS_PARTITION, preload: join(__dirname, 'settings-preload.cjs'), contextIsolation: true, sandbox: true, spellcheck: false },
@@ -499,7 +499,7 @@ function openSettings(path = '') {
   // the taskbar button takes its icon and relaunch target from the running program, not from a pinned
   // shortcut to the same app id whose program has moved (a reinstall elsewhere, a new portable folder)
   if (process.platform === 'win32' && app.isPackaged) {
-    settings.setAppDetails({ appId: APP_ID, appIconPath: process.execPath, appIconIndex: 0, relaunchCommand: `"${process.execPath}"`, relaunchDisplayName: 'Coopanion' });
+    settings.setAppDetails({ appId: APP_ID, appIconPath: process.execPath, appIconIndex: 0, relaunchCommand: `"${process.execPath}"`, relaunchDisplayName: 'Buggie' });
   }
   settings.once('ready-to-show', () => bringForward(settings));
   settings.on('page-title-updated', (e) => e.preventDefault());
@@ -556,7 +556,7 @@ async function ensurePet() {
  */
 const AUTOSTART = join(app.getPath('home'), '.config', 'autostart', 'coopanion.desktop');
 const LOGIN_ARGS = ['--background'];
-const LOGIN_NAME = PORTABLE ? `Coopanion ${PROGRAM_DIR}` : undefined;
+const LOGIN_NAME = PORTABLE ? `Buggie ${PROGRAM_DIR}` : undefined;
 const loginItem = {
   get: () => (LINUX ? existsSync(AUTOSTART)
     : LOGIN_NAME ? app.getLoginItemSettings().launchItems.some((item) => item.name === LOGIN_NAME)
@@ -566,7 +566,7 @@ const loginItem = {
     if (!on) { rmSync(AUTOSTART, { force: true }); return; }
     const exe = process.env.APPIMAGE || process.execPath;
     mkdirSync(dirname(AUTOSTART), { recursive: true });
-    writeFileSync(AUTOSTART, `[Desktop Entry]\nType=Application\nName=Coopanion\nExec="${exe}" --background\nX-GNOME-Autostart-enabled=true\n`);
+    writeFileSync(AUTOSTART, `[Desktop Entry]\nType=Application\nName=Buggie\nExec="${exe}" --background\nX-GNOME-Autostart-enabled=true\n`);
   },
 };
 
@@ -628,7 +628,7 @@ async function popupTray() {
 
 function refreshTray() {
   if (!tray) return;
-  tray.setToolTip(clickThrough ? T().trayClickThroughTip : 'Coopanion');
+  tray.setToolTip(clickThrough ? T().trayClickThroughTip : 'Buggie');
   if (LINUX) tray.setContextMenu(Menu.buildFromTemplate(trayItems()));
 }
 
@@ -693,8 +693,8 @@ core.on('state', (state, exit) => {
     : exit.kind === 'ports-busy' ? T().corePortsBusy(exit.from, exit.to)
       : exit.kind === 'incomplete' ? T().coreIncomplete(RELEASES_URL, exit.logFile)
         : exit.kind === 'failed' ? T().coreFailed(exit.times, exit.code, exit.logFile) : T().coreRestarting(exit.code);
-  if (Notification.isSupported()) new Notification({ title: 'Coopanion', body: detail, icon: WINDOW_ICON }).show();
-  if (state === 'failed') dialog.showErrorBox('Coopanion', detail);
+  if (Notification.isSupported()) new Notification({ title: 'Buggie', body: detail, icon: WINDOW_ICON }).show();
+  if (state === 'failed') dialog.showErrorBox('Buggie', detail);
 });
 
 core.on('open', (path) => openSettings(path));
@@ -726,7 +726,7 @@ app.on('before-quit', (e) => {
 function askRestoreStranded() {
   const response = dialog.showMessageBoxSync({
     type: 'question',
-    title: 'Coopanion',
+    title: 'Buggie',
     message: T().strandedMessage,
     detail: T().strandedDetail(STRANDED_DATA, dirname(DATA)),
     buttons: [T().strandedRestore, T().strandedKeep],

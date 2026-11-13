@@ -1,12 +1,12 @@
 # 匿名使用统计（`core/telemetry.ts`）
 
-从 v0.1.10 起，Coopanion 会向项目自己的服务器 `https://survey.palailab.org` 发送匿名使用统计，用来了解有多少人在用、用得多久、哪些功能有人用。本页列出发送的全部字段。客户端代码在 [`core/telemetry.ts`](../core/telemetry.ts)，服务端代码在 [`telemetry-server/`](../telemetry-server/)。
+从 v0.1.10 起，Buggie 会向项目自己的服务器 `https://survey.palailab.org` 发送匿名使用统计，用来了解有多少人在用、用得多久、哪些功能有人用。本页列出发送的全部字段。客户端代码在 [`core/telemetry.ts`](../core/telemetry.ts)，服务端代码在 [`telemetry-server/`](../telemetry-server/)。
 
 **关掉**：设置窗口「习惯」页「通用」一节的「使用统计」，取消勾选「发送匿名使用统计」。关掉时会发最后一条 `telemetry_disabled`，没发出去的记录随即清空，之后不再计数也不再发送。重新勾上后沿用原来的安装编号。
 
 ## 不发送的内容
 
-- 你说的话、打的字、Coo 的回答、屏幕截图、记忆和提示词的内容；
+- 你说的话、打的字、Buggie 的回答、屏幕截图、记忆和提示词的内容；
 - API Key、错误消息、你的文件名和路径（崩溃报告里只有程序自身文件相对程序目录的路径）；
 - 自定义模型端点的地址和模型名（只报 `custom`），以及从本地路径或网址装的扩展的包名（只报 `private`）；
 - 你的名字、账号，或任何能认出你这台电脑的硬件编号。
@@ -24,7 +24,7 @@
 | 字段 | 例子 | 说明 |
 |---|---|---|
 | `installId` | `945c528f-…` | 安装编号 |
-| `version` | `0.1.10` | Coopanion 版本 |
+| `version` | `0.1.10` | Buggie 版本 |
 | `os` / `osRelease` / `arch` | `win32` / `10.0.26200` / `x64` | 系统和架构 |
 | `locale` / `timeZone` | `zh-CN` / `Asia/Shanghai` | 系统语言和时区 |
 | `firstDate` | `2026-09-30` | 第一次启动的日期 |
@@ -40,19 +40,19 @@
 |---|---|
 | `date` | 本地日期 |
 | `runningMinutes` | 当天应用开着的分钟数 |
-| `interactedMinutes` | 当天你和 Coo 有过互动的分钟数（打字、说话、摸它、回答它的提问） |
+| `interactedMinutes` | 当天你和 Buggie 有过互动的分钟数（打字、说话、摸它、回答它的提问） |
 | `sessions` | 当天启动次数 |
-| `messagesText` / `messagesVoice` | 打字和语音说给 Coo 的条数 |
-| `touches` / `answers` | 点、摸、拎 Coo 的次数；回答 Coo 提问的次数 |
-| `petReplies` | Coo 在气泡里说话的次数 |
-| `cuaActions` | Coo 操作电脑的动作数（截屏、点击、打字等） |
+| `messagesText` / `messagesVoice` | 打字和语音说给 Buggie 的条数 |
+| `touches` / `answers` | 点、摸、拎 Buggie 的次数；回答 Buggie 提问的次数 |
+| `petReplies` | Buggie 在气泡里说话的次数 |
+| `cuaActions` | Buggie 操作电脑的动作数（截屏、点击、打字等） |
 | `cuaAsked` / `cuaGranted` | 电脑操作前问你的次数和你同意的次数 |
 | `providerErrors` | 失败的模型请求数：一次请求连同它的自动重试都没拿到回复才算一次；被新输入打断或因退出中止的不算 |
 | `models` | 按请求实际发往的模型分：`calls`（HTTP 请求数，每次重试各算一次）、`failed`（失败的请求数，算法同 `providerErrors`）、`failedStatus`（`failed` 按最后一次尝试的 HTTP 状态码分开计数，如 `{"400": 3}`；`200` 表示回复到一半出错，`none` 表示没拿到状态码，比如连不上或超时）、`aborted`（被新输入打断或因退出中止的尝试数）、输入/输出/缓存命中 token 数、`durations`（成功的尝试按从发出到收完用了多久分档计数：`<=2`、`<=5`、`<=10`、`<=20`、`<=40` 秒和 `more`）；每项带 `vendor`（内置服务的 id，或 `kind:<模块>`）、`model`（内置服务的模型名，其他为 `custom`）、`endpointKind`（`builtin` / `custom-remote` / `custom-local`） |
 | `vendor` / `model` / `endpointKind` | 当前使用的模型服务，规则同上 |
 | `language` | 界面语言 |
 | `autostart` | 是否开机自动启动 |
-| `figure` / `scheme` / `roam` | 形象（Coo 或大肥鱼）、配色、走动程度 |
+| `figure` / `scheme` / `roam` | 形象（Buggie 或大肥鱼）、配色、走动程度 |
 | `voiceInput` | 语音输入是否打开 |
 | `asrEngine` / `micMode` / `talkKey` | 识别引擎（`funasr` / `whisper` / `system` / `api`）、收音方式（按住说 / 按一下开关 / 一直听）、说话键（键名，`*2` 表示先按一下再按住） |
 | `sound` / `sounds` | 音效总开关；按类的开关（动作、互动、表情、打呼噜、说话、按钮与提示、提醒）和呼噜时长 |
@@ -60,10 +60,10 @@
 | `hoverButtons` / `doubleClickChat` / `rememberPosition` | 悬停按钮、双击打字是否打开、是否记住位置 |
 | `userNamed` | 「称呼」是否改过默认值，只报是或否，不报名字 |
 | `cuaEnabled` / `cuaLevel` | 电脑操作是否启用、询问档位 |
-| `persona` / `personaChanged` | Coo 的人设（CONSTITUTION.md）和应用带的哪一份人设（任一语言）一字不差：`coo`、`grail`、`forge`、`heart`、`winter`、`whale`，改过就是 `custom`；`personaChanged` 是它是否为 `custom`。人设的内容不发送 |
-| `gitAvailable` | 这台电脑上能不能运行 git，也就是 Coo 的工作区有没有版本历史 |
-| `memoryFiles` | Coo 工作区（记忆）里的文件个数 |
-| `chatDays` | 安装以来和 Coo 说过话的天数 |
+| `persona` / `personaChanged` | Buggie 的人设（CONSTITUTION.md）和应用带的哪一份人设（任一语言）一字不差：`coo`、`grail`、`forge`、`heart`、`winter`、`whale`，改过就是 `custom`；`personaChanged` 是它是否为 `custom`。人设的内容不发送 |
+| `gitAvailable` | 这台电脑上能不能运行 git，也就是 Buggie 的工作区有没有版本历史 |
+| `memoryFiles` | Buggie 工作区（记忆）里的文件个数 |
+| `chatDays` | 安装以来和 Buggie 说过话的天数 |
 | `extensions` | 装了的扩展：包名（本地或网址安装的报 `private`）、版本、类别 |
 | `ramGB` / `cpuCores` | 内存大小（取整到 GB）和 CPU 核数 |
 
@@ -82,7 +82,7 @@
 | `guide_finished` | | 引导走完 |
 | `guide_closed` | `step`、`at` | 引导在第几步被关掉；`at` 是关掉时气泡里那一句的名字，如 `language`（开头选语言的那页，此时 `step` 为 0）、`hello`、`name`、`source`、`persona-pick`、`roam`、`wake`、`vendor`、`model`、`key`、`sign-in`、`voice-download`、`talk`、`buttons`（选悬停按钮）、`persona`、`finish` |
 | `model_connected` | `via`、`vendor` | 在气泡里连上了模型。`via`：`guide`（引导里）、`prompt`（没连模型时说话后弹的询问里）、`ask`（定时来问 Key 时）；`vendor` 是选的内置服务的 id |
-| `key_prompt` | `answer` | 没连模型时跟 Coo 说话，它问「要去接通模型吗？」的回答：`connect` / `later` |
+| `key_prompt` | `answer` | 没连模型时跟 Buggie 说话，它问「要去接通模型吗？」的回答：`connect` / `later` |
 | `voice_model` | `result` | 引导里语音识别模型的下载：`ready`（下好了）、`failed`（没下下来）、`later`（选了先不用） |
 | `extension_installed` / `extension_removed` | `name`、`version`、`kind` | 启动时发现扩展比上次多了或少了 |
 | `crash` | `where`，其余见下表 | Core 出错。`where` 是来源：`core`（未捕获的异常，Core 随后退出）、`core-rejection`（未处理的 promise 拒绝，Core 继续运行；同样的一条在一次运行里只报一次）、`core-loop`（主循环异常退出，Core 随后关机并由应用重启）、`core-exit`（Core 进程意外退出后被重启，由重启后的 Core 报告） |

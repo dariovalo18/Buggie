@@ -22,7 +22,7 @@ export const S: Partial<typeof en> = {
   promptsTab: '프롬프트 템플릿',
   storageTab: '데이터 정리',
   toolsTab: '도구',
-  memoryDesc: 'Coo가 직접 쓴 기억 파일과 바뀐 기록.',
+  memoryDesc: 'Buggie가 직접 쓴 기억 파일과 바뀐 기록.',
   memoryTitle: '기억',
   personaTitle: '페르소나',
   reloadTitle: '시스템 프리픽스를 다시 불러오시겠습니까?',

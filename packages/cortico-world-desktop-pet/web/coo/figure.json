@@ -4,8 +4,8 @@
   "id": "coo",
   "version": "1.0.0",
   "name": {
-    "zh": "Coo",
-    "en": "Coo"
+    "zh": "Buggie",
+    "en": "Buggie"
   },
   "about": {
     "zh": "一个小桌宠,C 形的身体,开口是嘴,两只 0 形的眼睛,底下两条短腿",
@@ -218,9 +218,9 @@
         {
           "id": "naicoo",
           "name": {
-            "zh": "奶Coo",
-            "zh-Hant": "奶Coo",
-            "en": "Nai Coo"
+            "zh": "奶Buggie",
+            "zh-Hant": "奶Buggie",
+            "en": "Nai Buggie"
           }
         }
       ]
