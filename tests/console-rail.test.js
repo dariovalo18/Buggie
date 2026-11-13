@@ -116,16 +116,16 @@ describe('settings window rail', () => {
       expect(moved).toEqual(['world:c']);
     } finally { box.mockRestore(); delete HTMLElement.prototype.animate; }
   });
-  it('retains the C and both eyes while toggling and restores the choice after remount', () => {
+  it('retains the mark and both eyes while toggling and restores the choice after remount', () => {
     const { rail, toggle, dispose } = mount();
     const eyes = [...rail.el.querySelectorAll('.companion-brand .accent')];
-    const c = rail.el.querySelector('.companion-brand-c');
+    const c = rail.el.querySelector('.companion-brand');
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     toggle.click();
     expect(toggle.getAttribute('aria-label')).toBe(L.expandSidebar);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect([...rail.el.querySelectorAll('.companion-brand .accent')]).toEqual(eyes);
-    expect(rail.el.querySelector('.companion-brand-c')).toBe(c);
+    expect(rail.el.querySelector('.companion-brand')).toBe(c);
     expect(eyes).toHaveLength(2);
     dispose();
     const restored = mount();

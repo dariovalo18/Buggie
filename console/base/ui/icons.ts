@@ -269,6 +269,29 @@ const WORDMARK_MARK: readonly Shape[] = [
   ['circle', { cx: '163', cy: '117', r: '16', 'stroke-width': '11', class: 'accent' }],
 ];
 
+/** Buggie's mark in brandMark's coordinates: a round body, two horns, the eyes in the accent colour and a smile. */
+const BUGGIE_MARK: readonly Shape[] = [
+  ['path', { d: 'M84 78L66 40', 'stroke-width': '24' }],
+  ['path', { d: 'M172 78L190 40', 'stroke-width': '24' }],
+  ['circle', { cx: '128', cy: '138', r: '74', 'stroke-width': '28' }],
+  ['circle', { cx: '103', cy: '130', r: '15', 'stroke-width': '11', class: 'accent' }],
+  ['circle', { cx: '153', cy: '130', r: '15', 'stroke-width': '11', class: 'accent' }],
+  ['path', { d: 'M114 167Q128 178 142 167', 'stroke-width': '10' }],
+];
+
+/** Buggie's mark alone, for the settings window's rail. */
+export function buggieMark(doc: Document, cls = 'brandmark'): SVGSVGElement {
+  const svg = doc.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '29 29 198 198');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', cls);
+  shapesInto(doc, svg, BUGGIE_MARK);
+  return svg;
+}
+
 const CHRISTMAS_HAT: readonly Shape[] = [
   ['path', { fill: '#d94743', d: 'M159.118 22.491C139.719 -4.853 114.068 -41.731 79.592 -41.044C39.744 -40.714 17.63 -1.985 11.944 38.766L35.316 42.739C41.214 15.587 50.512 -1.103 66.014 -1.934C62.398 16.064 54.646 37.509 50.674 60.881Z' }],
   ['path', { fill: '#fff9f0', d: 'M160.45 13.646Q99.655 23.937 42.495 55.126Q33.603 60.119 38.262 71.222Q42.921 82.326 52.123 78.285Q108.64 48.355 167.534 38.683Q178.304 36.235 174.596 24.822Q171.839 13.1 160.45 13.646Z' }],

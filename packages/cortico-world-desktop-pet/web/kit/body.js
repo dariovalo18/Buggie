@@ -80,6 +80,8 @@ export const FACES = {
   // a motion's own face (not one to ask for): eyes shut through a bow
   bowing:    { label: '鞠躬', f: () => ({ gap: [48, 48], eyes: [{ shape: 'lid', ry: 0 }, { shape: 'lid', ry: 0 }] }) },
   confused:  { label: '疑惑', kao: '(0 o ?', f: () => ({ gap: [44, 40], eyes: [ring(), ring({ rx: 14, ry: 11 })], question: true }) },
+  // the hunt's own face (not one to ask for): chomping on the bug just caught
+  eating:    { label: '吃虫', f: t => { const c = Math.abs(Math.sin(t * 13)); return { gap: [36 + 28 * c, 36 + 28 * c], eyes: [{ shape: 'up' }, { shape: 'up' }], blush: .6 }; } },
 };
 
 /** The faces a word can ask for, and the motions the kit does by name. */
@@ -127,6 +129,8 @@ const HITS = [[128, 128, 108]];
  * leaves them out, and the frame's `gesture` ({ kind, k: 0..1 }, or null) says which one is playing and how far.
  * `figure.anchors`, `figure.extent` ([x0, y0, x1, y1]) and `figure.hits` ([[x, y, r]]) are in logo units; each
  * is read every frame, so a getter may follow the skin. `figure.setSkin(skin)` hears each skin change.
+ * `opts.hunt: true` lets the body hunt bugs: now and then while it roams freely, and whenever it does the pack word
+ * `hunt`, a small bug turns up on the floor some way off, the body spots it, runs after it as it flees and eats it.
  */
 export function createPet(els, opts) {
   const { petG, shadowEl, fxG } = els;
@@ -221,9 +225,96 @@ export function createPet(els, opts) {
   /** A ground line to walk to: anywhere for a free body, else where it stands. */
   const pickY = () => (freeGround ? rnd(minY(), floorY) : pet.gy);
 
+  /* ---------- the bug hunt (opts.hunt) ---------- */
+  const hunter = opts.hunt === true;
+  /** The bug on the floor: crawl → spot → chase → eaten, or escape when the body is taken away mid-chase. */
+  let bug = null;
+  /** When free roaming next sends a bug, and when the face after a meal turns happy. */
+  let huntAt = rnd(90, 240), mealDoneAt = 0;
+  const HUNT_EVERY = [180, 420];
+  /** How close (stage px) the bug's x must come to the body's for a bite; a cornered bug sits just past the body's reach. */
+  const biteReach = () => 52 * S;
+  const bugMin = () => minX() - 30 * S, bugMax = () => maxX() + 30 * S;
+
+  /** Sends a bug on the far side of the body, toward where there is more room. Returns false when it cannot hunt now. */
+  function startHunt() {
+    if (!hunter || bug || busy() || W <= 0) return false;
+    const right = pet.x < W / 2;
+    const x = clamp(pet.x + (right ? 1 : -1) * rnd(240, 400), bugMin(), bugMax());
+    bug = { x, dir: Math.random() < .5 ? -1 : 1, state: 'crawl', age: 0, t: 0, step: 0 };
+    return true;
+  }
+
+  function eatBug() {
+    const side = Math.sign(bug.x - pet.x) || pet.facing;
+    bug = null;
+    if (pet.mode === 'run' || pet.mode === 'walk') setMode('idle');
+    pet.facing = side; pet.speed = 0; pet.sqv += 1.6;
+    pet.expr = 'eating'; pet.exprUntil = T + 1.5; mealDoneAt = T + 1.5;
+    pet.nextAt = Math.max(pet.nextAt, T + 4);
+    play('pop', 'ui'); play('chirps', 'move');
+    for (let i = 0; i < 7; i++) emit('crumb', toStage(150, 150 + pet.low), { vx: rnd(-70, 70), vy: rnd(-150, -50), life: rnd(.5, .8) });
+  }
+
+  function huntStep(dt) {
+    if (mealDoneAt && T >= mealDoneAt) { mealDoneAt = 0; if (!busy()) { setExpr('happy', 1.6); emitHeart(); emitHeart(); } }
+    if (!bug) return;
+    bug.age += dt; bug.t += dt;
+    const dx = bug.x - pet.x, adx = Math.abs(dx);
+    let speed = 0;
+    switch (bug.state) {
+      case 'crawl': case 'spot': {
+        // it wanders about until the body sees it, then freezes for a moment
+        speed = bug.state === 'crawl' ? 24 : 0;
+        if (bug.state === 'crawl' && bug.age > 1.2 && !busy()) {
+          if (pet.mode === 'sleep' || pet.mode === 'sit') setMode('wake', { startle: true });
+          else if (pet.mode === 'walk' || pet.mode === 'run') setMode('idle');
+          pet.facing = Math.sign(dx) || pet.facing;
+          setExpr('excited', 1);
+          bug.state = 'spot'; bug.t = 0;
+        } else if (bug.state === 'spot' && bug.t > 1) { bug.state = 'chase'; bug.t = 0; }
+        break;
+      }
+      case 'chase': {
+        if (busy() || opts.still?.()) { bug.state = 'escape'; bug.dir = Math.sign(dx) || 1; break; }
+        // it flees from the body once it is close, and tires after a few seconds
+        if (adx < 280) bug.dir = Math.sign(dx) || bug.dir;
+        const tired = clamp(1 - (bug.t - 4) / 4, .3, 1);
+        speed = (adx < 280 ? 135 : 40) * tired;
+        if (adx < biteReach()) { eatBug(); return; }
+        if (pet.mode !== 'run') setMode('run', { target: pet.x, targetY: pet.gy });
+        pet.target = clamp(bug.x, minX(), maxX());
+        break;
+      }
+      case 'escape': speed = 170; break;
+    }
+    bug.x += bug.dir * speed * dt;
+    bug.step += speed * dt;
+    if (bug.state === 'escape') { if (bug.x < -40 || bug.x > W + 40) bug = null; return; }
+    if (bug.x < bugMin()) { bug.x = bugMin(); if (bug.state === 'crawl') bug.dir = 1; }
+    if (bug.x > bugMax()) { bug.x = bugMax(); if (bug.state === 'crawl') bug.dir = -1; }
+  }
+
+  /** The bug as SVG markup in stage pixels: a little pixel-art ladybird scuttling on six legs. */
+  function bugMarkup(sc) {
+    const k = bug.state === 'crawl' && bug.age < .25 ? bug.age / .25 : 1;
+    const leg = Math.sin(bug.step * .35) * 2;
+    const scared = bug.state === 'chase' || bug.state === 'escape';
+    const px = (x, y, w, h, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+    let s = `<g transform="translate(${f(bug.x)} ${f(groundY())}) scale(${f(bug.dir * sc * k)} ${f(sc * k)})" shape-rendering="crispEdges">`;
+    s += `<path fill="none" stroke="#3A3F4A" stroke-width="1.6" d="M-7 -4L${f(-10 + leg)} 0M-1 -4L${f(-2 - leg)} 0M5 -4L${f(6 + leg)} 0"/>`;
+    s += px(-10, -14, 16, 10, '#D93A3A') + px(-8, -16, 12, 2, '#D93A3A') + px(-8, -4, 12, 1, '#D93A3A');
+    s += px(-7, -13, 3, 3, '#8F1D1D') + px(-1, -11, 3, 3, '#8F1D1D') + px(-6, -8, 3, 2, '#8F1D1D') + px(-2, -16, 1, 12, '#8F1D1D');
+    s += px(6, -12, 7, 8, '#4A4F5C') + px(9, -11, 3, 3, '#FFFFFF') + px(scared ? 9 : 10, -10, 2, 2, '#1E2350');
+    s += `<path fill="none" stroke="#3A3F4A" stroke-width="1.4" d="M9 -12L11 -17M12 -12L15 -16"/>`;
+    if (scared) s += `<g transform="scale(${f(bug.dir)} 1)">${px(-1, -27, 2, 6, '#E5484D')}${px(-1, -19, 2, 2, '#E5484D')}</g>`;
+    return s + '</g>';
+  }
+
   /** Runs a motion. Returns false when the body cannot take it now (in the air, being dragged). */
   function act(a) {
     if (busy()) return false;
+    if (a === 'hunt' && hunter) { if (!startHunt()) return false; pet.lastAct = a; return true; }
     pet.expr = null; pet.lastAct = a;
     const seated = pet.mode === 'sleep' || pet.mode === 'sit';
     switch (a) {
@@ -342,6 +433,10 @@ export function createPet(els, opts) {
 
   function decide() {
     const calm = roam === 'calm';
+    if (hunter && T >= huntAt) {
+      huntAt = T + rnd(HUNT_EVERY[0], HUNT_EVERY[1]) * (calm ? 1.5 : 1);
+      if (startHunt()) { pet.lastAct = 'hunt'; return; }
+    }
     const opts2 = [['walk', calm ? 10 : 28], ['run', calm ? 0 : 12], ['look', 14], ['jump', calm ? 2 : 8], ['sit', 16], ['expr', 12], ['wait', calm ? 30 : 10]]
       .filter(o => o[1] > 0 && (o[0] !== pet.lastAct || o[0] === 'wait'));
     let r = Math.random() * opts2.reduce((a, o) => a + o[1], 0), pick = 'wait';
@@ -390,6 +485,7 @@ export function createPet(els, opts) {
       return [pdx * pet.facing / pm * 5 * k, pdy / pm * 4 * k];
     };
 
+    huntStep(dt);
     switch (m) {
       case 'idle': {
         lookT = track();
@@ -647,6 +743,7 @@ export function createPet(els, opts) {
       p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt;
       if (p.type === 'drop') { p.vy += 900 * dt; if (p.y > groundY()) p.age = p.life; }
       if (p.type === 'dust') p.vx *= Math.exp(-dt * 4);
+      if (p.type === 'crumb') { p.vy += 700 * dt; if (p.y > groundY()) p.age = p.life; }
       if (p.age >= p.life) P.splice(i, 1);
     }
     pet.talkK *= Math.exp(-dt * 12);
@@ -715,6 +812,7 @@ export function createPet(els, opts) {
 
     let s = '';
     const sc = S / .48;
+    if (bug) s += bugMarkup(sc * 1.7);
     // sleep z's take the eye colour, or the figure's own colour for them
     const zPaint = custom?.colors?.z ? `stroke="${custom.colors.z}"` : 'class="eye"';
     for (const p of P) {
@@ -729,6 +827,8 @@ export function createPet(els, opts) {
       } else if (p.type === 'note') {
         const op = a < .15 ? a / .15 : 1 - (a - .15) / .85, z = (.8 + .4 * a) * sc;
         s += `<g opacity="${f(op)}" transform="translate(${f(p.x + Math.sin(p.age * 3) * 8)} ${f(p.y)}) scale(${f(z)})"><path ${zPaint} fill="none" stroke-width="2.4" stroke-linecap="round" d="M3 4V-9L9 -6"/><circle ${zPaint} fill="none" stroke-width="3.6" cx="0" cy="4.5" r="1.8"/></g>`;
+      } else if (p.type === 'crumb') {
+        s += `<rect fill="#D93A3A" shape-rendering="crispEdges" x="${f(p.x)}" y="${f(p.y)}" width="${f(4 * sc)}" height="${f(4 * sc)}" opacity="${f(1 - a * a)}"/>`;
       } else if (p.type === 'drop') {
         s += `<path class="tearf" transform="translate(${f(p.x)} ${f(p.y)}) scale(${f(.9 * sc)})" d="${DROP}"/>`;
       }

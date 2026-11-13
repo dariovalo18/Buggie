@@ -1,6 +1,6 @@
 /** First-run files of the app's deployment. */
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultRegion, endpointName, firstVendor, vendorEntry } from 'cortico-provider-coo/src/vendors.ts';
@@ -67,6 +67,7 @@ export function seed(home: string, language: Language): void {
   if (!existsSync(join(workspace, CONSTITUTION))) copyFileSync(personaFile('coo', configured), join(workspace, CONSTITUTION));
   // the console shows it as the bot's avatar
   if (!existsSync(join(deploy, 'avatar.png'))) copyFileSync(join(SEED_DIR, 'avatar.png'), join(deploy, 'avatar.png'));
+  renameFromCoo(config, join(deploy, 'avatar.png'));
   followLanguage(workspace, configured);
   moveEndpointsToCoo(join(home, 'providers'));
   if (upgrading) {
@@ -74,6 +75,22 @@ export function seed(home: string, language: Language): void {
     keepCuaAsking(config);
     moveTerminalToConsole(deploy, config);
   }
+}
+
+/** SHA-256 of the avatars Coopanion seeded, Coo's face. */
+const COO_AVATARS = new Set([
+  '142b11d8b76fd1cc521515570af6e11c763ae84fbe7335506454e5f48affde91',
+  'f62138463c98549bf5cf0a09dd6580b178b7a21772b5ff121981433135093502',
+]);
+/**
+ * Data from before the rename keeps the bot's old name and face: the name `Coo` becomes Buggie, and an avatar
+ * still exactly as Coopanion seeded it becomes Buggie's. A name or picture the person chose stays.
+ */
+function renameFromCoo(config: string, avatar: string): void {
+  const cfg = JSON.parse(readTextFile(config)) as { displayName?: unknown };
+  if (cfg.displayName === 'Coo') writeFileSync(config, `${JSON.stringify({ ...cfg, displayName: DISPLAY_NAME }, null, 2)}\n`);
+  const bytes = createHash('sha256').update(readFileSync(avatar)).digest('hex');
+  if (COO_AVATARS.has(bytes)) copyFileSync(join(SEED_DIR, 'avatar.png'), avatar);
 }
 
 type Section = Record<string, unknown>;

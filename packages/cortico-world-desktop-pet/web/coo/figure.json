@@ -1231,6 +1231,29 @@
         "en": "sways to a beat on the spot for three seconds, music notes floating up"
       },
       "seconds": 3.4
+    },
+    {
+      "id": "hunt",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "抓虫",
+          "吃虫"
+        ],
+        "en": [
+          "chase-bug",
+          "eat-bug"
+        ],
+        "es-419": [
+          "cazar",
+          "comer-bug"
+        ]
+      },
+      "about": {
+        "zh": "一只小虫子从地上爬出来,你追着它跑,抓到后一口吃掉;修好一个 bug 时很合适",
+        "en": "a little bug crawls out on the floor, you chase it and gobble it up; fitting when a bug has just been fixed"
+      },
+      "seconds": 8
     }
   ],
   "sounds": {},

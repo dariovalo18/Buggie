@@ -23,7 +23,8 @@ describe('the words the model can use', () => {
     for (const pack of ['coo', 'whale']) {
       const words = (kind) => vocabOf(pack).filter((v) => v.kind === kind).map((v) => v.id).sort();
       expect(words('expression'), pack).toEqual([...KIT_EXPRESSIONS].sort());
-      expect(words('motion'), pack).toEqual([...KIT_MOTIONS].sort());
+      // Buggie's pack adds its own word, the bug hunt (web/coo/figure.js)
+      expect(words('motion'), pack).toEqual([...KIT_MOTIONS, ...(pack === 'coo' ? ['hunt'] : [])].sort());
     }
   });
 
@@ -365,5 +366,39 @@ describe('picking the body up', () => {
     expect(pet.pet.mode).toBe('air');
     run(pet, 3);
     expect(['idle', 'look', 'dizzy']).toContain(pet.pet.mode);
+  });
+});
+
+describe('the bug hunt', () => {
+  it('sends a bug that the body spots, chases and eats, then turns happy', () => {
+    const faces = [];
+    let fx = '';
+    const fxG = { setAttribute() {}, set innerHTML(v) { fx = v; }, get innerHTML() { return fx; } };
+    const el = () => ({ setAttribute() {}, innerHTML: '' });
+    const pet = createPet({ petG: el(), shadowEl: el(), fxG }, {
+      sfx: { play() {} }, figure: { draw: (g, face, o) => faces.push(o.face) }, skin: defaultSkin(), roam: 'off', hunt: true,
+      bounds: () => ({ W: 1200, H: 400, floorY: 380, S: .42 }),
+    });
+    pet.resize();
+    expect(pet.doWord('hunt')).toBe(false);
+    run(pet, .1);
+    expect(pet.act('hunt')).toBe(true);
+    run(pet, .1);
+    expect(fx).toContain('#D93A3A');
+    let sawRun = false, sawEating = false, sawHappyAfter = false;
+    for (let i = 0; i < 20 * 60; i++) {
+      pet.step(1 / 60); pet.render();
+      if (pet.pet.mode === 'run') sawRun = true;
+      if (faces.at(-1) === 'eating') sawEating = true;
+      if (sawEating && faces.at(-1) === 'happy') { sawHappyAfter = true; break; }
+    }
+    expect(sawRun).toBe(true);
+    expect(sawEating).toBe(true);
+    expect(sawHappyAfter).toBe(true);
+  });
+
+  it('is off for a body that does not ask for it', () => {
+    const pet = barePet();
+    expect(pet.act('hunt')).toBe(false);
   });
 });
