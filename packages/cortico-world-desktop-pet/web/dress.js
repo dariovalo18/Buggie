@@ -164,7 +164,7 @@ function apply(next, persist) {
   if (persist) return save('/api/skin', typeof persist === 'number' ? { skin, scale: persist } : { skin });
 }
 
-const CROP = { palette: '18 18 220 220', head: '18 -72 220 220', side: '-52 -4 220 220', glasses: '28 7 220 220', neck: '32 84 220 220' };
+const CROP = { palette: '14 0 228 228', head: '18 -72 220 220', side: '-52 -4 220 220', glasses: '28 7 220 220', neck: '32 84 220 220' };
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 
 function colorRow(slot, item) {

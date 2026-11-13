@@ -43,11 +43,11 @@ describe('the words the model can use', () => {
     expect(frames.at(-1)).toMatchObject({ name: 'thinking', face: { think: true } });
   });
 
-  it('every expression has a face Coo can draw', () => {
+  it('every expression has a face Buggie can draw', () => {
     for (const n of KIT_EXPRESSIONS) {
       const fc = FACES[n].f(.5);
       expect(fc.eyes).toHaveLength(2);
-      expect(figure(fc, { look: fc.lookAt || [0, 0], legs: STAND, low: 0, t: .5, blink: 0, acc: defaultSkin() })).toContain('class="eye"');
+      expect(figure(fc, { look: fc.lookAt || [0, 0], legs: STAND, low: 0, t: .5, blink: 0, acc: defaultSkin() })).toContain('class="bug-eye"');
     }
   });
 

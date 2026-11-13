@@ -1,5 +1,5 @@
 /**
- * Coo, the built-in figure: its drawing (a C-shaped body with two ring eyes and two short legs),
+ * Buggie, the built-in figure (pack id `coo`): its drawing (a round, furry monster with horns, big eyes, stubby arms and two short legs),
  * its palettes and accessories, and the skin that picks them. The Coo pack (figure.js here) draws
  * with it inside the figure frame; the pages use it for the menu's avatar, the dressing page's
  * tiles and the colours of their own bubbles and buttons, which follow Coo's palette.
@@ -8,13 +8,74 @@
  */
 import { DROP, FACES, LEG_W, STAND, f, heartD } from '../kit/body.js';
 
-const EYES = [[113, 117], [163, 117]];
-const BODY_W = 36;
+const EYES = [[100, 114], [160, 114]];
+/** The furry body: an egg centred at (BX, BY), with tufts along its sides. */
+const BX = 128, BY = 130, RX = 98, RY = 100;
+/** How much bigger than a face's eye size Buggie's eyes are drawn. */
+const EYE_K = 1.45;
+/** Buggie's fixed colours: outline, belly, horns, irises, blush and mouth; the fur is the palette's eye colour. */
+const BUG = { line: '#1E2350', belly: '#9B7BEA', horn: '#8A6FE0', hornLine: '#5B47B0', iris: '#2B1650', blush: '#B48BF2', mouth: '#5A1F4A', tongue: '#FF7A9C' };
 const pol = (a, r) => [128 + r * Math.cos(a * Math.PI / 180), 128 - r * Math.sin(a * Math.PI / 180)];
 const pt = p => `${f(p[0])} ${f(p[1])}`;
 
-function cPath(gt, gb) {
-  return `M${pt(pol(gt, 84))}A84 84 0 1 0 ${pt(pol(-gb, 84))}`;
+/** The body's outline: smooth on top and bottom, tufted on the sides where the fur sticks out. */
+const FUR_PATH = (() => {
+  const n = 84;
+  let d = '';
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    // tufts on the sides only, fading in from the top and bottom
+    const side = Math.max(0, (Math.abs(c) - .45) / .55);
+    const out = i % 2 ? 7 * side * side : 0;
+    d += `${i ? 'L' : 'M'}${f(BX + (RX + out) * c)} ${f(BY + (RY + out * .6) * s)}`;
+  }
+  return d + 'Z';
+})();
+/** A horn pointing up, its base at the origin, tip leaning left. */
+const HORN = 'M-15 6C-16 -16 -14 -32 -6 -46C3 -34 10 -18 15 6Z';
+const HORN_RINGS = 'M-14 -8Q0 -3 13 -9M-11 -22Q-1 -18 8 -24';
+const TUFT = 'M-14 8Q-16 -8 -6 -20Q-3 -6 -1 6ZM-3 8Q0 -14 11 -24Q12 -8 8 8ZM6 8Q15 -2 24 -6Q21 5 14 12Z';
+const lineAttr = (w) => `stroke="${BUG.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+/** Fill of the fur: a palette's fixed `inside` colour, else its eye colour. */
+const furFill = (fixed) => fixed?.inside ?? 'var(--skin-eye)';
+
+/** One of Buggie's eyes: open ones (ring, lid) get a white, an iris and two glints; the rest are drawn as lines. */
+function bugEye(e, cx, cy, blink, iris, lx, ly) {
+  if (e.shape === 'ring') {
+    const rx = e.rx * EYE_K, ry = e.ry * EYE_K * (1 - blink);
+    cx += (e.dx || 0) * EYE_K; cy += (e.dy || 0) * EYE_K;
+    if (ry < 2.5) return `<path fill="none" ${lineAttr(6)} d="M${f(cx - rx)} ${f(cy)}L${f(cx + rx)} ${f(cy)}"/>`;
+    const ix = cx + lx * .25, iy = cy + ly * .25;
+    return `<ellipse fill="#FFFFFF" ${lineAttr(5)} cx="${f(cx)}" cy="${f(cy)}" rx="${f(rx)}" ry="${f(ry)}"/>` +
+      `<ellipse fill="${iris}" cx="${f(ix)}" cy="${f(iy + ry * .05)}" rx="${f(rx * .72)}" ry="${f(ry * .78)}"/>` +
+      `<circle fill="#FFFFFF" cx="${f(ix - rx * .28)}" cy="${f(iy - ry * .3)}" r="${f(Math.min(rx, ry) * .27)}"/>` +
+      `<circle fill="#FFFFFF" cx="${f(ix + rx * .24)}" cy="${f(iy + ry * .26)}" r="${f(Math.min(rx, ry) * .12)}"/>`;
+  }
+  if (e.shape === 'lid') {
+    const R = 16 * EYE_K, ry = e.ry * EYE_K * (1 - blink);
+    cx += (e.dx || 0) * EYE_K; cy += (e.dy || 0) * EYE_K;
+    const lid = `<path fill="none" ${lineAttr(6)} d="M${f(cx - R)} ${f(cy)}L${f(cx + R)} ${f(cy)}"/>`;
+    if (ry < 2.5) return lid;
+    const half = (r, h) => `M${f(cx - r)} ${f(cy)}A${f(r)} ${f(h)} 0 0 0 ${f(cx + r)} ${f(cy)}Z`;
+    return `<path fill="#FFFFFF" ${lineAttr(5)} d="${half(R, ry)}"/>` +
+      `<path fill="${iris}" d="${half(R * .7, ry * .85)}"/>` +
+      `<circle fill="#FFFFFF" cx="${f(cx + R * .2)}" cy="${f(cy + ry * .35)}" r="${f(Math.min(4, ry * .3))}"/>` + lid;
+  }
+  const scale = `transform="translate(${f(cx)} ${f(cy)}) scale(1.25) translate(${f(-cx)} ${f(-cy)})"`;
+  if (e.shape === 'heart') return `<path fill="#FF6B9A" ${lineAttr(4)} ${scale} d="${eyePath(e, cx, cy)}"/>`;
+  return `<path fill="none" ${lineAttr(e.shape === 'spiral' ? 4 : e.sw || 9)} ${scale} d="${eyePath(e, cx, cy)}"/>`;
+}
+
+/** The mouth, from the face's gap (wider is more open; talking widens it) and its brows. */
+function bugMouth(fc) {
+  const MX = 130, MY = 148;
+  const k = Math.max(0, Math.min(1, ((fc.gap[0] + fc.gap[1]) / 2 - 30) / 34));
+  const w = 17 + 7 * k, open = Math.max(0, k - .45) * 34;
+  const fang = `<path fill="#FFFFFF" ${lineAttr(2.5)} d="M${MX - 7} ${MY + 1}L${MX - 3} ${MY + 8}L${MX} ${MY + 1}Z"/>`;
+  if (fc.brows === 'sad' && k < .4) return `<path fill="none" ${lineAttr(5)} d="M${f(MX - w)} ${MY + 5}Q${MX} ${MY - 5} ${f(MX + w)} ${MY + 5}"/>`;
+  if (open < 2.5) return `<path fill="none" ${lineAttr(5)} d="M${f(MX - w)} ${MY}Q${MX} ${MY + 10} ${f(MX + w)} ${MY}"/>` + fang;
+  return `<path fill="${BUG.mouth}" ${lineAttr(4)} d="M${f(MX - w)} ${MY}Q${MX} ${f(MY + 6 + open * 1.6)} ${f(MX + w)} ${MY}Q${MX} ${MY + 3} ${f(MX - w)} ${MY}Z"/>` +
+    `<ellipse fill="${BUG.tongue}" cx="${MX + 2}" cy="${f(MY + 3 + open * .85)}" rx="${f(w * .42)}" ry="${f(open * .32)}"/>` + fang;
 }
 function ellipse(cx, cy, rx, ry) {
   if (ry < 1.6) return `M${f(cx - rx)} ${f(cy)}L${f(cx + rx)} ${f(cy)}`;
@@ -50,6 +111,8 @@ function eyePath(e, cx, cy) {
    A palette is [ink, eyes] per theme; ink draws the body and the pages' lines and buttons. Its `fixed` colours are
    the figure's alone and the same in both themes: `body` in place of ink, `inside` filling the C, `pupils` the eyes. */
 export const PALETTES = [
+  // Buggie's own teal: the fur takes the eye colour
+  { id: 'buggie',    l: ['#1E2350', '#3FCFBA'], d: ['#FFFFFF', '#56DDC9'] },
   { id: 'mint',      l: ['#1B1626', '#00A870'], d: ['#FFFFFF', '#2FD59B'] },
   { id: 'mono',      l: ['#1B1626', '#1B1626'], d: ['#FFFFFF', '#FFFFFF'] },
   { id: 'navigator', l: ['#14213A', '#1F6FE0'], d: ['#FFFFFF', '#5EA3FF'] },
@@ -71,7 +134,7 @@ export const HEADS = ['none', 'cat', 'bear', 'bunny', 'antenna', 'halo', 'tophat
 export const SIDES = ['none', 'headphones', 'feather', 'earring', 'clip', 'bow'];
 export const GLASSES = ['none', 'round', 'square', 'monocle'];
 export const NECKS = ['none', 'bowtie', 'bell', 'scarf'];
-export const HEAD_TOP = { none: 12, cat: -14, bear: -4, bunny: -34, antenna: -34, halo: -8, tophat: -28, party: -34, sailor: -20 };
+export const HEAD_TOP = { none: 4, cat: -14, bear: -4, bunny: -34, antenna: -34, halo: -8, tophat: -28, party: -34, sailor: -20 };
 
 /* color mapping: channel -> source. 'body' / 'eye' follow the palette; the rest are fixed accessory colors with a dark twin */
 export const ACC_COLORS = [
@@ -161,12 +224,12 @@ function sideFront(id, sw) {
 }
 function glassesD(id, gx, gy) {
   // frames sit one ring-width outside the eyes so the two never touch
-  const L = [113 + gx, 117 + gy], R = [163 + gx, 117 + gy], M = stroke('c-glasses-main', 10);
+  const L = [EYES[0][0] + gx, EYES[0][1] + gy], R = [EYES[1][0] + gx, EYES[1][1] + gy], M = stroke('c-glasses-main', 10);
   switch (id) {
     case 'round':
-      return `<circle ${M} cx="${f(L[0])}" cy="${f(L[1])}" r="31"/><circle ${M} cx="${f(R[0])}" cy="${f(R[1])}" r="31"/><path ${M} d="M${f(L[0] - 31)} ${f(L[1] - 6)}L62 106"/>`;
+      return `<circle ${M} cx="${f(L[0])}" cy="${f(L[1])}" r="31"/><circle ${M} cx="${f(R[0])}" cy="${f(R[1])}" r="31"/><path ${M} d="M${f(L[0] - 31)} ${f(L[1] - 6)}L40 104"/>`;
     case 'square':
-      return `<rect ${M} x="${f(L[0] - 26)}" y="${f(L[1] - 22)}" width="52" height="44" rx="15"/><rect ${M} x="${f(R[0] - 26)}" y="${f(R[1] - 22)}" width="52" height="44" rx="15"/><path ${M} d="M${f(L[0] - 26)} ${f(L[1] - 6)}L62 106"/>`;
+      return `<rect ${M} x="${f(L[0] - 26)}" y="${f(L[1] - 22)}" width="52" height="44" rx="15"/><rect ${M} x="${f(R[0] - 26)}" y="${f(R[1] - 22)}" width="52" height="44" rx="15"/><path ${M} d="M${f(L[0] - 26)} ${f(L[1] - 6)}L40 104"/>`;
     case 'monocle':
       return `<circle ${M} cx="${f(R[0])}" cy="${f(R[1])}" r="31"/>`;
   }
@@ -200,40 +263,52 @@ export function figure(fc, o) {
   const t = o.t, lx = o.look[0], ly = o.look[1], acc = o.acc, sw = o.swing || 0;
   const fixed = PALETTES.find(p => p.id === acc.palette)?.fixed;
   let s = fixed?.body ? `<g style="${fixedBody(acc, fixed.body)}">` : '<g>';
-  s += `<g class="ink" fill="none" stroke-width="${LEG_W}" stroke-linecap="round">`;
-  for (const l of o.legs) s += `<path d="M${f(l[0])} ${f(l[1])}L${f(l[2])} ${f(l[3])}"/>`;
-  s += `</g><g transform="translate(0 ${f(o.low)})">`;
+  const fur = furFill(fixed);
+  // legs behind the body: an outline, then the fur
+  for (const l of o.legs) {
+    const d = `M${f(l[0])} ${f(l[1])}L${f(l[2])} ${f(l[3])}`;
+    s += `<path fill="none" stroke="${BUG.line}" stroke-width="${LEG_W + 10}" stroke-linecap="round" d="${d}"/>`;
+    s += `<path fill="none" stroke="${fur}" stroke-width="${LEG_W}" stroke-linecap="round" d="${d}"/>`;
+  }
+  s += `<g transform="translate(0 ${f(o.low)})">`;
   s += sideBack(acc.side, sw);
   s += headBack(acc.head, sw);
-  // reaches 2 under the body's inner edge (84 - 36 / 2) so no seam shows; the mouth shows its rim
-  if (fixed?.inside) s += `<circle fill="${fixed.inside}" cx="128" cy="128" r="68"/>`;
-  s += `<path class="ink" fill="none" stroke-width="${BODY_W}" stroke-linecap="round" d="${cPath(fc.gap[0], fc.gap[1])}"/>`;
+  // horns and the tuft behind the body, so its outline covers their bases
+  [[84, 48, -22, 1], [172, 48, 22, -1]].forEach(([x, y, r, m]) => {
+    s += `<g transform="translate(${x} ${y}) rotate(${f(r + sw * .15)}) scale(${m} 1)">` +
+      `<path fill="${BUG.horn}" ${lineAttr(5)} d="${HORN}"/><path fill="none" stroke="${BUG.hornLine}" stroke-width="3.5" stroke-linecap="round" d="${HORN_RINGS}"/></g>`;
+  });
+  s += `<path fill="${fur}" ${lineAttr(5)} transform="translate(122 36) rotate(${f(sw * .4)})" d="${TUFT}"/>`;
+  s += `<path fill="${fur}" ${lineAttr(6)} d="${FUR_PATH}"/>`;
+  // a soft highlight on the upper left and the belly
+  s += `<ellipse fill="#FFFFFF" opacity=".22" transform="translate(84 76) rotate(-32)" cx="0" cy="0" rx="28" ry="15"/>`;
+  s += `<ellipse fill="${BUG.belly}" cx="132" cy="194" rx="56" ry="34"/>`;
+  // stubby arms on either side, swinging a little with the body
+  s += `<ellipse fill="${fur}" ${lineAttr(5)} transform="translate(42 170) rotate(${f(16 + sw * .5)})" cx="0" cy="0" rx="14" ry="25"/>`;
+  s += `<ellipse fill="${fur}" ${lineAttr(5)} transform="translate(214 170) rotate(${f(-16 - sw * .5)})" cx="0" cy="0" rx="14" ry="25"/>`;
   s += neckD(acc.neck, sw);
-  if (fc.blush > .02) {
-    s += `<g class="blush" opacity="${f(fc.blush * .8)}"><ellipse cx="${f(99 + lx)}" cy="146" rx="11" ry="5.5"/><ellipse cx="${f(167 + lx)}" cy="146" rx="11" ry="5.5"/></g>`;
-  }
+  const blush = .35 + .65 * (fc.blush || 0);
+  s += `<g fill="${BUG.blush}" opacity="${f(blush * .85)}"><ellipse cx="${f(EYES[0][0] - 6 + lx * .6)}" cy="142" rx="14" ry="7"/><ellipse cx="${f(EYES[1][0] + 8 + lx * .6)}" cy="142" rx="14" ry="7"/></g>`;
+  s += `<g transform="translate(${f(lx * .5)} ${f(ly * .4)})">${bugMouth(fc)}</g>`;
   const close = o.eyeClose || 0;
+  const iris = fixed?.pupils ?? BUG.iris;
   fc.eyes.forEach((e, i) => {
-    const ee = { ...e };
-    if ((ee.shape === 'ring' || ee.shape === 'lid') && o.blink) ee.ry *= (1 - o.blink);
     const cx = EYES[i][0] + lx, cy = EYES[i][1] + ly;
     const tr = close > .01 ? ` transform="translate(0 ${f(cy)}) scale(1 ${f(Math.max(.08, 1 - close) * 100) / 100}) translate(0 ${f(-cy)})"` : '';
-    // rings and lids are the eye open and take the pupil
-    const pupil = fixed?.pupils && (ee.shape === 'ring' || ee.shape === 'lid') ? fixed.pupils : 'none';
-    s += `<path class="eye" fill="${pupil}" stroke-width="${e.sw || 12}" stroke-linecap="round" stroke-linejoin="round"${tr} d="${eyePath(ee, cx, cy)}"/>`;
+    s += `<g class="bug-eye"${tr}>${bugEye(e, cx, cy, o.blink || 0, iris, lx, ly)}</g>`;
   });
   s += glassesD(acc.glasses, lx * .4, ly * .3);
   if (fc.brows) {
-    const bx = lx * .5, by = ly * .4;
+    const bx = lx * .5, by = ly * .4, [[x0, y0], [x1]] = EYES, top = y0 - 30;
     const d = fc.brows === 'angry'
-      ? `M${f(98 + bx)} ${f(88 + by)}L${f(124 + bx)} ${f(97 + by)}M${f(152 + bx)} ${f(97 + by)}L${f(178 + bx)} ${f(88 + by)}`
-      : `M${f(98 + bx)} ${f(96 + by)}L${f(123 + bx)} ${f(88 + by)}M${f(153 + bx)} ${f(88 + by)}L${f(178 + bx)} ${f(96 + by)}`;
-    s += `<path class="ink" fill="none" stroke-width="9" stroke-linecap="round" d="${d}"/>`;
+      ? `M${f(x0 - 16 + bx)} ${f(top - 6 + by)}L${f(x0 + 12 + bx)} ${f(top + 3 + by)}M${f(x1 - 12 + bx)} ${f(top + 3 + by)}L${f(x1 + 16 + bx)} ${f(top - 6 + by)}`
+      : `M${f(x0 - 16 + bx)} ${f(top + 2 + by)}L${f(x0 + 12 + bx)} ${f(top - 6 + by)}M${f(x1 - 12 + bx)} ${f(top - 6 + by)}L${f(x1 + 16 + bx)} ${f(top + 2 + by)}`;
+    s += `<path fill="none" stroke="${BUG.line}" stroke-width="8" stroke-linecap="round" d="${d}"/>`;
   }
   s += sideFront(acc.side, sw);
   s += headFront(acc.head, sw, t);
   if (fc.orbit) {
-    const top = HEAD_TOP[acc.head] ?? 12;
+    const top = HEAD_TOP[acc.head] ?? 4;
     for (let i = 0; i < 3; i++) {
       const a = t * 3.2 + i * 2.094, sn = Math.sin(a);
       s += `<circle class="eye" fill="none" stroke-width="4" cx="${f(128 + 62 * Math.cos(a))}" cy="${f(top + 12 * sn)}" r="${sn < 0 ? 5 : 7}" opacity="${sn < 0 ? .55 : 1}"/>`;
@@ -253,7 +328,7 @@ export function figure(fc, o) {
       s += `<circle class="eye" fill="none" stroke-width="5" cx="${f(214 + 10 * i)}" cy="${f(46 - 22 * i - 6 * k)}" r="${4 + 3 * i}" opacity="${f(.4 + .6 * Math.sin(Math.PI * k))}"/>`;
     }
   }
-  if (fc.sweat) s += `<path class="tearf" transform="translate(56 ${f(64 + 3 * Math.sin(t * 7))}) scale(1.3)" d="${DROP}"/>`;
+  if (fc.sweat) s += `<path class="tearf" transform="translate(38 ${f(84 + 3 * Math.sin(t * 7))}) scale(1.3)" d="${DROP}"/>`;
   if (fc.anger) {
     const k = 1 + .12 * Math.sin(t * 10);
     s += `<g class="angry" transform="translate(210 44) scale(${f(k * 10) / 10})" fill="none" stroke-width="7" stroke-linecap="round"><path d="M-13 -4Q-4 -4 -4 -13M4 -13Q4 -4 13 -4M13 4Q4 4 4 13M-4 13Q-4 4 -13 4"/></g>`;
@@ -291,7 +366,7 @@ export function mini(face, acc, t = 0, extra = {}) {
  */
 const FIGURE_ID = /^[a-z0-9][a-z0-9-]{0,31}$/;
 export function defaultSkin() {
-  return { figure: 'coo', scheme: 'deepseek', palette: 'mint', head: 'none', side: 'none', glasses: 'none', neck: 'none', colors: JSON.parse(JSON.stringify(CHANNEL_DEFAULT)) };
+  return { figure: 'coo', scheme: 'deepseek', palette: 'buggie', head: 'none', side: 'none', glasses: 'none', neck: 'none', colors: JSON.parse(JSON.stringify(CHANNEL_DEFAULT)) };
 }
 const validColor = (slot, v) => (v === 'eye' || (v === 'body' && !NO_BODY[slot]) || ACC_COLORS.some(c => c.id === v));
 /** Keeps what is valid in `raw`, defaults the rest. */
@@ -360,7 +435,7 @@ export const COO_CSS = `
  */
 export function cooFigure() {
   let skin = defaultSkin();
-  const top = () => HEAD_TOP[skin.head] ?? 12;
+  const top = () => HEAD_TOP[skin.head] ?? 4;
   /** The markup last put in the group: a body at rest gives the same markup frame after frame. */
   let drawn = '';
   return {
@@ -372,7 +447,7 @@ export function cooFigure() {
       drawn = s;
     },
     setSkin(s) { if (s) skin = s; },
-    get anchors() { return { tears: [[116, 136], [166, 136]], bubble: [146, top() - 8] }; },
+    get anchors() { return { tears: [[EYES[0][0], 140], [EYES[1][0], 140]], bubble: [146, top() - 8] }; },
     get extent() { return [20, Math.min(20, top()), 236, 256]; },
   };
 }

@@ -8,8 +8,8 @@
     "en": "Buggie"
   },
   "about": {
-    "zh": "一个小桌宠,C 形的身体,开口是嘴,两只 0 形的眼睛,底下两条短腿",
-    "en": "a little desktop pet: a C-shaped body whose opening is its mouth, two 0-shaped eyes and two short legs underneath"
+    "zh": "一个毛茸茸的圆滚滚小怪兽:青绿色的身体,紫色的肚皮,头顶两只紫色小角和一撮毛,两只大圆眼睛,一张带小尖牙的嘴,两只短手和底下两条短腿",
+    "en": "a fluffy, round little monster: a teal body with a purple belly, two small purple horns and a tuft of fur on top, two big round eyes, a mouth with a little fang, two stubby arms and two short legs underneath"
   },
   "author": "Pal-AI-Lab",
   "entry": "figure.js",
@@ -31,6 +31,22 @@
         "ru": "Цвета"
       },
       "options": [
+        {
+          "id": "buggie",
+          "name": {
+            "zh": "Buggie 青",
+            "zh-Hant": "Buggie 青",
+            "en": "Buggie teal",
+            "ja": "Buggie ティール",
+            "ko": "Buggie 청록",
+            "fr": "Sarcelle Buggie",
+            "de": "Buggie-Türkis",
+            "es-419": "Turquesa Buggie",
+            "pt-BR": "Turquesa Buggie",
+            "it": "Turchese Buggie",
+            "ru": "Бирюзовый Buggie"
+          }
+        },
         {
           "id": "mint",
           "name": {

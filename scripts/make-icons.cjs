@@ -19,7 +19,7 @@ const { pathToFileURL } = require('node:url');
 const ROOT = join(__dirname, '..');
 const ICONS = join(ROOT, 'app', 'icons');
 const COO = pathToFileURL(join(ROOT, 'packages', 'cortico-world-desktop-pet', 'web', 'coo', 'coo.js')).href;
-const TILE = '#0D1117', INK = '#FFFFFF', EYE = '#2FD59B';
+const TILE = '#0D1117', INK = '#FFFFFF', EYE = '#56DDC9';
 const ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 128, 256];
 const PREVIEW = process.argv.includes('--preview');
 
@@ -34,7 +34,8 @@ app.whenReady().then(async () => {
   const { mini, defaultSkin } = await import(COO);
   const markup = mini('neutral', defaultSkin());
   const win = new BrowserWindow({ width: 600, height: 600, show: false, transparent: true, backgroundColor: '#00000000', webPreferences: { offscreen: true } });
-  const css = `html,body{margin:0;background:transparent}.ink{stroke:${INK}}.inkf{fill:${INK}}.eye{stroke:${EYE}}`;
+  // the fur takes the palette's eye colour
+  const css = `html{--skin-eye:${EYE}}html,body{margin:0;background:transparent}.ink{stroke:${INK}}.inkf{fill:${INK}}.eye{stroke:${EYE}}`;
   const shoot = async (size, round) => {
     await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><style>${css}</style>${tileHtml(markup, size, round)}`)}`);
     await new Promise((r) => setTimeout(r, 150));
@@ -43,7 +44,7 @@ app.whenReady().then(async () => {
 
   /** The figure alone, black on transparent, `size` px square. */
   const template = async (size) => {
-    const html = `<!doctype html><style>html,body{margin:0;background:transparent}.ink{stroke:#000}.inkf{fill:#000}.eye{stroke:#000}</style>`
+    const html = `<!doctype html><style>html{--skin-eye:#000}html,body{margin:0;background:transparent}.ink{stroke:#000}.inkf{fill:#000}.eye{stroke:#000}</style>`
       + `<svg viewBox="-12 -12 280 280" style="width:${size}px;height:${size}px;display:block">${markup}</svg>`;
     await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
     await new Promise((r) => setTimeout(r, 150));

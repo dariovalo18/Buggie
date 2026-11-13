@@ -311,7 +311,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
-    figure: 'coo', scheme: 'deepseek', palette: 'mint', head: 'none', side: 'none', glasses: 'none', neck: 'none',
+    figure: 'coo', scheme: 'deepseek', palette: 'buggie', head: 'none', side: 'none', glasses: 'none', neck: 'none',
     colors: { head: { main: 'body', acc: 'eye' }, side: { main: 'eye', acc: 'eye' }, glasses: { main: 'body', acc: 'eye' }, neck: { main: 'eye', acc: 'eye' } },
   },
   looks: [],
