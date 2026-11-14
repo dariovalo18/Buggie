@@ -70,6 +70,22 @@ export const S: typeof en = {
   colStatus: 'Статус',
   colPriority: 'Приоритет',
   colAssignee: 'Исполнитель',
+  colKind: "Тип",
+  colMissing: "Не хватает",
+  complete: "Заполнен",
+  kinds: {
+    bug: "Ошибка",
+    feature: "Функция",
+    task: "Задача",
+  },
+  details: {
+    body: "Что происходит",
+    expected: "Ожидается",
+    steps: "Шаги",
+    environment: "Окружение",
+    acceptance: "Критерий приёмки",
+    verify: "Как проверить",
+  },
   noTickets: 'Тикетов нет.',
   ticketsHint: 'Попросите Buggie создать, изменить или прокомментировать тикет. Щелчок по багу на экране тоже предлагает тикет.',
   statuses: {

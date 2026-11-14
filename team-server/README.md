@@ -52,9 +52,11 @@ JSON in and out. Every route except `health`, `register` and `login` takes `Auth
 | `POST /v1/orgs/:org/projects` `{key, name, repos?, sectors?}`, `PATCH …/projects/:key` `{name?, repos?, sectors?, archived?}` | admin | projects |
 | `PUT`/`DELETE …/projects/:key/members/:username` | admin | who is in a project |
 | `GET /v1/orgs/:org/tickets?project&sector&status&assignee&q&limit` | member | tickets, newest change first; `status` is a comma list or `active` (default, open and in progress) or `all`; `assignee` is a username, `me` or `none` |
-| `POST /v1/orgs/:org/tickets` `{project, title, body?, sector?, priority?, assignee?, source?}` | member | a ticket numbered in its project (`PAY-12`) |
-| `GET`/`PATCH /v1/orgs/:org/tickets/:ref` `{title?, body?, status?, priority?, sector?, assignee?}` | member | one ticket with its comments; a change |
+| `POST /v1/orgs/:org/tickets` `{project, title, kind?, body?, expected?, steps?, environment?, acceptance?, verify?, sector?, priority?, assignee?, source?}` | member | a ticket numbered in its project (`PAY-12`) |
+| `GET`/`PATCH /v1/orgs/:org/tickets/:ref` `{title?, kind?, body?, expected?, steps?, environment?, acceptance?, verify?, status?, priority?, sector?, assignee?}` | member | one ticket with its details and comments; a change |
 | `POST /v1/orgs/:org/tickets/:ref/comments` `{body}` | member | a comment |
+
+A ticket is a `bug` (the default), a `feature` or a `task`. Besides its title it tells what happens (`body`), what should happen instead (`expected`), the steps that show it (`steps`), where (`environment`: branch, version, system), how to know it is done (`acceptance`) and how to check that (`verify`: a command, a test). Every ticket the API returns lists in `missing` the details its kind still needs before it can be worked without asking: `body`, `expected`, `steps` and `acceptance` for a bug, `body` and `acceptance` for the others. A database from before these details gets their columns when the server starts.
 | `GET /v1/orgs/:org/changes?since&wait` | member | the activity log after sequence `since`; without `since`, only the current sequence. `wait` (seconds, up to 30) holds the answer until the next entry |
 
 Roles are `owner`, `admin` and `member`. Only an owner makes or unmakes an owner, and an org always keeps one. Statuses are `open`, `in_progress`, `resolved` and `closed`; priorities `low`, `normal`, `high` and `urgent`. A project key is 2 to 10 capital letters and digits, starting with a letter.

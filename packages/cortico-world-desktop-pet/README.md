@@ -73,7 +73,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 `team.enabled` 打开、在设置窗口的「团队」页登录并选了公司时(`src/team.ts`),World 读 `team.url` 上的团队服务器(本仓库的 `team-server/`)。登录令牌存为部署的密钥 `DESKTOP_PET_TEAM_TOKEN`,退出登录后是 `-`;选的公司是 `team.org`。「团队」页的操作都走 pet 面板的 `team*` 方法,由 World 发请求。
 
 - 活动日志用 `/changes?wait=25` 读,写进日志就送到。对方自己做的不报;别人做的、和对方有关的作为 `desktop-pet.team`(debounce)送出:分配给对方的工单、对方工作组里没人负责的新工单、对方负责或开的工单被修改或评论、对方被加进工作组或项目。启动和换公司后的第一次读取只取当前序号,之前的不报。读取失败时 30 秒后重试;令牌失效时当作退出登录。
-- 登录期间,点一只虫子先问要解释还是开工单;选开工单时送出 `desktop-pet.ticket`,由 bot 用 `team_info` 找仓库对得上的项目,再用 `ticket_create` 开单。
+- 登录期间,点一只虫子先问要解释还是开工单;选开工单时送出 `desktop-pet.ticket`,由 bot 用 `team_info` 找仓库对得上的项目,再用 `ticket_create` 开单,并按回执的 `missing` 问齐还缺的细节(预期、重现步骤、验收标准),用 `ticket_update` 补上。分配给对方或进了对方工作组的工单还缺细节时,`[team]` 那一行末尾写明缺哪些。
 
 悬停按钮 `kit`(工具箱,`web/dev-kit.js`、`web/dev-panels.js`)打开一个带剪贴板文字的面板:格式化 JSON、Base64 编解码、解析 JWT、时间戳、URL 编解码、SHA-256、新 UUID,都在页面里算,结果可以复制或接着处理。
 悬停按钮 `focus`(`src/focus.ts`)开始一段 `focus.minutes` 分钟的专注,再点一下结束;按钮上显示剩下的分钟。专注期间身体停在原地,结束后提醒休息 `focus.breakMinutes` 分钟并睡觉,休息结束时问要不要再来一段。开始、转入休息、结束都作为 `desktop-pet.focus`(piggyback)告诉 bot。

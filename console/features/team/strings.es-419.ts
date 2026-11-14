@@ -70,6 +70,22 @@ export const S: typeof en = {
   colStatus: 'Estado',
   colPriority: 'Prioridad',
   colAssignee: 'Asignado a',
+  colKind: "Tipo",
+  colMissing: "Falta",
+  complete: "Completo",
+  kinds: {
+    bug: "Error",
+    feature: "Mejora",
+    task: "Tarea",
+  },
+  details: {
+    body: "Qué pasa",
+    expected: "Esperado",
+    steps: "Pasos",
+    environment: "Entorno",
+    acceptance: "Criterio de aceptación",
+    verify: "Cómo verificar",
+  },
   noTickets: 'No hay tickets.',
   ticketsHint: 'Pídele a Buggie que abra, cambie o comente tickets. Al hacer clic en un bug de la pantalla también puedes abrir un ticket.',
   statuses: {

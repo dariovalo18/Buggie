@@ -100,7 +100,9 @@ describe('the team server through the World', () => {
     expect(secrets.token).toMatch(/^bgt_/);
     expect(cfg.team.org).toBe(s.org);
     const created = await tool(world, 'ticket_create')!.handler({ project: 'PAY', title: 'Refund fails', assignee: 'me', source: { file: 'src/refund.ts', line: 3 } }, {} as never);
-    expect(JSON.parse((created as { text: string }).text)).toMatchObject({ ref: 'PAY-1', assignee: { username: 'bruno' }, author: { username: 'bruno' } });
+    expect(JSON.parse((created as { text: string }).text)).toMatchObject({ ref: 'PAY-1', kind: 'bug', missing: ['body', 'expected', 'steps', 'acceptance'], assignee: { username: 'bruno' }, author: { username: 'bruno' } });
+    const filled = await tool(world, 'ticket_update')!.handler({ ref: 'PAY-1', body: 'A refund of 0.10 answers 500.', expected: 'It goes through.', steps: 'pnpm refund 0.10', acceptance: 'Small refunds work.' }, {} as never);
+    expect(JSON.parse((filled as { text: string }).text)).toMatchObject({ missing: [], expected: 'It goes through.' });
     const listed = await tool(world, 'ticket_list')!.handler({ assignee: 'me' }, {} as never);
     expect(JSON.parse((listed as { text: string }).text).tickets.map((t: any) => t.ref)).toEqual(['PAY-1']);
     await panel('teamSignOut');
@@ -117,6 +119,8 @@ describe('the team server through the World', () => {
     await expect.poll(() => host.events.map((e) => e.type)).toContain('desktop-pet.team');
     const i = host.events.findIndex((e) => e.type === 'desktop-pet.team');
     expect(host.events[i]!.text).toContain('PAY-1');
+    // a ticket with no details yet: the bot hears which ones it still needs
+    expect(host.events[i]!.text).toMatch(/expected.+steps.+acceptance/);
     expect(host.pushOpts[i]).toEqual({ trigger: 'debounce' });
   });
 

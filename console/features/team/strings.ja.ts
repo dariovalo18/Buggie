@@ -70,6 +70,22 @@ export const S: typeof en = {
   colStatus: '状態',
   colPriority: '優先度',
   colAssignee: '担当者',
+  colKind: "種類",
+  colMissing: "不足",
+  complete: "そろっています",
+  kinds: {
+    bug: "バグ",
+    feature: "機能",
+    task: "タスク",
+  },
+  details: {
+    body: "現状",
+    expected: "期待される動作",
+    steps: "再現手順",
+    environment: "環境",
+    acceptance: "受け入れ条件",
+    verify: "確認方法",
+  },
   noTickets: 'チケットはありません。',
   ticketsHint: 'チケットの作成、変更、コメントは Buggie に頼めます。画面のバグをクリックしてもチケットを作れます。',
   statuses: {

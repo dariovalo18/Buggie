@@ -222,7 +222,7 @@ If you quit the app while an extension is being installed or uninstalled, it wai
 
 A team server lets several Buggies share companies, work groups, projects and tickets. Each person registers one account and signs in from the **Team** page of the settings window. The account that creates a company owns it; owners and admins add people by username or share the company's invite code, and put them in work groups and projects. Tickets are numbered by project (`PAY-12`).
 
-While you are signed in, Buggie tells you when a ticket is assigned to you, when an unassigned ticket arrives in one of your work groups, and when your tickets change or get a comment. Ask Buggie to list, open, change or comment on tickets. Clicking a bug on the screen asks whether to explain it or open a ticket for it.
+While you are signed in, Buggie tells you when a ticket is assigned to you, when an unassigned ticket arrives in one of your work groups, and when your tickets change or get a comment. Ask Buggie to list, open, change or comment on tickets. A ticket tells what happens, what should happen instead, the steps that show it, where, how to know it is done and how to check it; when Buggie opens one, it asks you for what is still missing, and the Team page shows what each ticket lacks. Clicking a bug on the screen asks whether to explain it or open a ticket for it.
 
 To try it on one computer, run `pnpm run team-server` in the Buggie folder; it listens on `http://127.0.0.1:8791`, the address the Team page starts with. To run it on a server, see [team-server/README.md](team-server/README.md).
 

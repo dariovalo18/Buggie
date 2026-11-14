@@ -70,6 +70,22 @@ export const S: typeof en = {
   colStatus: '상태',
   colPriority: '우선순위',
   colAssignee: '담당자',
+  colKind: "유형",
+  colMissing: "부족",
+  complete: "완료",
+  kinds: {
+    bug: "버그",
+    feature: "기능",
+    task: "작업",
+  },
+  details: {
+    body: "현재 상황",
+    expected: "기대 동작",
+    steps: "재현 단계",
+    environment: "환경",
+    acceptance: "완료 기준",
+    verify: "확인 방법",
+  },
   noTickets: '티켓이 없습니다.',
   ticketsHint: '티켓을 만들거나 바꾸거나 댓글을 다는 일은 Buggie에게 부탁하세요. 화면의 버그를 클릭해도 티켓을 만들 수 있습니다.',
   statuses: {

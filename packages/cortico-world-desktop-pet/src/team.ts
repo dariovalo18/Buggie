@@ -16,8 +16,10 @@ const VIEW_SECONDS = 10 * 60;
 
 export interface Person { username: string; name: string }
 export interface TicketSummary {
-  ref: string; project: string; title: string; status: string; priority: string; sector: string | null;
+  ref: string; project: string; kind?: string; title: string; status: string; priority: string; sector: string | null;
   assignee: Person | null; author: Person | null;
+  /** The details its kind still needs before it can be worked (expected, steps, acceptance…); absent from an older server. */
+  missing?: string[];
 }
 export interface OrgView {
   org: { id: number; name: string; role: string; invite?: string };

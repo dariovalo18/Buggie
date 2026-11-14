@@ -70,6 +70,22 @@ export const S: typeof en = {
   colStatus: '狀態',
   colPriority: '優先順序',
   colAssignee: '負責人',
+  colKind: "類型",
+  colMissing: "還缺",
+  complete: "齊全",
+  kinds: {
+    bug: "缺陷",
+    feature: "功能",
+    task: "任務",
+  },
+  details: {
+    body: "現況",
+    expected: "預期",
+    steps: "步驟",
+    environment: "環境",
+    acceptance: "驗收標準",
+    verify: "驗證方式",
+  },
   noTickets: '沒有工單。',
   ticketsHint: '讓 Buggie 新建、修改或評論工單。點擊螢幕上的蟲子時也能開工單。',
   statuses: {

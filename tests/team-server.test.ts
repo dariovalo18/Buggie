@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtempSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { createHub, RATE_MAX, type Hub } from '../team-server/hub.ts';
 
 const hubs: Hub[] = [];
@@ -150,6 +154,39 @@ describe('team server tickets', () => {
     ]);
     expect((await ana.as('GET', `${o}/changes?since=${next.seq}`)).json.changes).toEqual([]);
     expect((await ana.as('GET', `${o}/tickets/PAY-1`)).json.comments).toMatchObject([{ author: { username: 'bruno' }, body: 'Looking into it' }]);
+  });
+
+  it('keeps what a ticket needs to be worked and lists the details still missing for its kind', async () => {
+    const { ana, o } = await team();
+    const bug = (await ana.as('POST', `${o}/tickets`, { project: 'PAY', title: 'Refund fails', body: 'A refund of 0.10 answers 500.' })).json;
+    expect(bug).toMatchObject({ ref: 'PAY-1', kind: 'bug', body: 'A refund of 0.10 answers 500.', expected: '', missing: ['expected', 'steps', 'acceptance'] });
+    const done = (await ana.as('PATCH', `${o}/tickets/PAY-1`, {
+      expected: 'The refund goes through.', steps: '1. Pay 1.00\n2. Refund 0.10', environment: 'main, staging',
+      acceptance: 'Refunds under 1.00 work.', verify: 'pnpm test refund',
+    })).json;
+    expect(done).toMatchObject({ missing: [], steps: '1. Pay 1.00\n2. Refund 0.10', verify: 'pnpm test refund' });
+    const task = (await ana.as('POST', `${o}/tickets`, { project: 'PAY', kind: 'task', title: 'Rotate keys', body: 'Yearly.', acceptance: 'New keys live.' })).json;
+    expect(task).toMatchObject({ kind: 'task', missing: [] });
+    expect((await ana.as('GET', `${o}/tickets`)).json.tickets.map((t: any) => [t.ref, t.missing])).toEqual(expect.arrayContaining([['PAY-1', []], ['PAY-2', []]]));
+    expect((await ana.as('POST', `${o}/tickets`, { project: 'PAY', kind: 'epic', title: 'x' })).json).toEqual({ error: 'kind_invalid' });
+    // a change to a detail is logged by name, without its text
+    const log = (await ana.as('GET', `${o}/changes?since=0`)).json.changes.filter((c: any) => c.kind === 'ticket.updated');
+    expect(log[0].fields.expected).toEqual({ from: undefined, to: undefined });
+  });
+
+  it('adds the ticket details to a database from before them', async () => {
+    const dbFile = join(mkdtempSync(join(tmpdir(), 'team-db-')), 'team.sqlite');
+    const old = new DatabaseSync(dbFile);
+    old.exec(`CREATE TABLE tickets (
+      id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL, number INTEGER NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
+      status TEXT NOT NULL, priority TEXT NOT NULL, sector_id INTEGER, assignee_id INTEGER, author_id INTEGER NOT NULL,
+      source TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`);
+    old.close();
+    await createHub({ dbFile }).close();
+    const db = new DatabaseSync(dbFile);
+    const cols = (db.prepare('PRAGMA table_info(tickets)').all() as Array<{ name: string }>).map((c) => c.name);
+    db.close();
+    expect(cols).toEqual(expect.arrayContaining(['kind', 'expected', 'steps', 'environment', 'acceptance', 'verify']));
   });
 
   it('keeps each org to its own members', async () => {

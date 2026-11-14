@@ -35,7 +35,9 @@ interface TeamState {
   error?: string | null;
 }
 interface Ticket {
-  ref: string; title: string; status: string; priority: string; sector: string | null; assignee: Person | null;
+  ref: string; kind?: string; title: string; status: string; priority: string; sector: string | null; assignee: Person | null;
+  /** The details its kind still needs; absent from an older server. */
+  missing?: string[];
 }
 
 const errorText = (code: string) => (S.errors as Record<string, string>)[code] ?? code;
@@ -168,7 +170,7 @@ async function mount(ctx: PageContext): Promise<void> {
   const filter = ui.select({ options: [{ value: 'assignee=me', label: S.filterMine }, { value: '', label: S.filterActive }, { value: 'status=all', label: S.filterAll }] });
   filter.addEventListener('change', () => void loadTickets(), { signal });
   const refresh = ui.button(S.refresh, { size: 'sm', onClick: () => void loadTickets() });
-  const ticketTable = ui.table({ head: [S.colRef, S.colTitle, S.colStatus, S.colPriority, S.colSector, S.colAssignee] });
+  const ticketTable = ui.table({ head: [S.colRef, S.colKind, S.colTitle, S.colStatus, S.colPriority, S.colSector, S.colAssignee, S.colMissing] });
   tickets.body.append(box(filter, refresh), ticketTable.el, ui.h('p', 'home-note', S.ticketsHint));
   root.append(tickets.el);
 
@@ -180,7 +182,9 @@ async function mount(ctx: PageContext): Promise<void> {
     if (!r || r.error) { ticketTable.clear(errorText(r?.error ?? 'unreachable')); return; }
     if (!r.tickets.length) { ticketTable.clear(S.noTickets); return; }
     for (const t of r.tickets) {
-      ticketTable.addRow([t.ref, t.title, (S.statuses as Record<string, string>)[t.status] ?? t.status, (S.priorities as Record<string, string>)[t.priority] ?? t.priority, t.sector ?? '—', t.assignee?.name ?? '—']);
+      const missing = t.missing === undefined ? '—' : t.missing.length ? t.missing.map((d) => (S.details as Record<string, string>)[d] ?? d).join(', ') : S.complete;
+      ticketTable.addRow([t.ref, t.kind ? (S.kinds as Record<string, string>)[t.kind] ?? t.kind : '—', t.title, (S.statuses as Record<string, string>)[t.status] ?? t.status,
+        (S.priorities as Record<string, string>)[t.priority] ?? t.priority, t.sector ?? '—', t.assignee?.name ?? '—', missing]);
     }
   }
 

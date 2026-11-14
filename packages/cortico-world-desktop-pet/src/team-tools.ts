@@ -7,7 +7,18 @@ import { TeamError, type TeamClient } from './team.ts';
 
 const STATUS = ['open', 'in_progress', 'resolved', 'closed'];
 const PRIORITY = ['low', 'normal', 'high', 'urgent'];
+const KIND = ['bug', 'feature', 'task'];
 const ref = { type: 'string', description: 'The ticket reference, project key and number, e.g. PAY-12.' };
+/** What a ticket tells besides its title; each answer lists in `missing` the ones its kind still needs. */
+const details = {
+  kind: { type: 'string', enum: KIND, description: 'bug (default), feature or task.' },
+  body: { type: 'string', description: 'What happens now, or what is wanted: the error, the message, where. Markdown.' },
+  expected: { type: 'string', description: 'For a bug: what should happen instead.' },
+  steps: { type: 'string', description: 'For a bug: the steps or the command that show it, one per line.' },
+  environment: { type: 'string', description: 'Where: branch or commit, version, system, local, staging or production.' },
+  acceptance: { type: 'string', description: 'How to know it is done, in terms someone can check.' },
+  verify: { type: 'string', description: 'How to check it: a command to run or a test that should pass.' },
+};
 
 export const TEAM_TOOL_DECLS: Array<Omit<ToolDef, 'handler'>> = [
   {
@@ -35,19 +46,19 @@ export const TEAM_TOOL_DECLS: Array<Omit<ToolDef, 'handler'>> = [
   {
     name: 'ticket_get',
     tags: ['read'],
-    description: 'Read one ticket with its body, where it came from and its comments.',
+    description: 'Read one ticket with its details, where it came from and its comments. `missing` lists the details its kind still needs before it can be worked.',
     parameters: { type: 'object', properties: { ref }, required: ['ref'] },
   },
   {
     name: 'ticket_create',
     tags: ['act'],
-    description: 'Open a ticket in a project of the team server. The answer carries its reference.',
+    description: 'Open a ticket in a project of the team server. Fill every detail you know; never make one up. The answer carries its reference and, in `missing`, the details still needed: ask the person for them with pet_ask, one or two at a time, and add them with ticket_update.',
     parameters: {
       type: 'object',
       properties: {
         project: { type: 'string', description: 'The project key; team_info lists them with their repositories.' },
         title: { type: 'string', description: 'The problem or task, one line.' },
-        body: { type: 'string', description: 'Details: what happens, what was expected, the error, how to reproduce. Markdown.' },
+        ...details,
         sector: { type: 'string', description: 'The work group that should take it.' },
         priority: { type: 'string', enum: PRIORITY, description: 'Default normal.' },
         assignee: { type: 'string', description: 'A username, or me.' },
@@ -63,7 +74,7 @@ export const TEAM_TOOL_DECLS: Array<Omit<ToolDef, 'handler'>> = [
   {
     name: 'ticket_update',
     tags: ['act'],
-    description: 'Change a ticket: its status, who has it, its work group, priority, title or body. Give only what changes.',
+    description: 'Change a ticket: its status, who has it, its work group, priority, title, kind or details. Give only what changes.',
     parameters: {
       type: 'object',
       properties: {
@@ -73,7 +84,7 @@ export const TEAM_TOOL_DECLS: Array<Omit<ToolDef, 'handler'>> = [
         sector: { type: 'string', description: 'A work group name, or an empty string for none.' },
         priority: { type: 'string', enum: PRIORITY },
         title: { type: 'string' },
-        body: { type: 'string' },
+        ...details,
       },
       required: ['ref'],
     },

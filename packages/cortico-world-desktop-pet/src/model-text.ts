@@ -109,7 +109,8 @@ const zh = {
       n.kind === 'assigned' ? `${n.actor}把它分配给了你`
       : n.kind === 'sector' ? `${n.actor}在你的工作组「${n.ticket.sector}」里新建了它,还没有人负责`
       : n.kind === 'changed' ? `${n.actor}修改了 ${n.fields.join('、')}`
-      : n.kind === 'comment' ? `${n.actor}评论:${n.excerpt}` : ''),
+      : n.kind === 'comment' ? `${n.actor}评论:${n.excerpt}` : '')
+      + ((n.kind === 'assigned' || n.kind === 'sector') && n.ticket.missing?.length ? `;还缺 ${n.ticket.missing.join('、')}` : ''),
   ticketBug: (user: string, command: string, cwd: string, problem: string, tail: string) =>
     `[ticket] ${user}想为屏幕上的这只虫子在团队服务器上开一个工单。来自 ${code(command)}(在 ${cwd}):\n${problem}` +
     (tail ? `\n输出的最后几行:\n${fence(tail)}` : ''),
@@ -280,7 +281,8 @@ const en: typeof zh = {
       n.kind === 'assigned' ? `${n.actor} assigned it to you`
       : n.kind === 'sector' ? `${n.actor} opened it in your work group "${n.ticket.sector}", nobody has it yet`
       : n.kind === 'changed' ? `${n.actor} changed ${n.fields.join(', ')}`
-      : n.kind === 'comment' ? `${n.actor} commented: ${n.excerpt}` : ''),
+      : n.kind === 'comment' ? `${n.actor} commented: ${n.excerpt}` : '')
+      + ((n.kind === 'assigned' || n.kind === 'sector') && n.ticket.missing?.length ? `; still missing ${n.ticket.missing.join(', ')}` : ''),
   ticketBug: (user, command, cwd, problem, tail) =>
     `[ticket] ${user} wants a ticket on the team server for this bug on the screen. From ${code(command)} (in ${cwd}):\n${problem}` +
     (tail ? `\nThe end of the output:\n${fence(tail)}` : ''),

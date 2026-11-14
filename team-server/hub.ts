@@ -35,6 +35,19 @@ const RATE_TRACKED_MAX = 100_000;
 
 export const STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
 export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
+export const KINDS = ['bug', 'feature', 'task'] as const;
+/**
+ * What a ticket tells besides its title, each a text column: what happens (`body`), what should happen instead, the
+ * steps that show it, where (branch, version, system), how to know it is done, and how to check that (a command, a test).
+ */
+export const DETAILS = ['body', 'expected', 'steps', 'environment', 'acceptance', 'verify'] as const;
+type Detail = typeof DETAILS[number];
+/** The details a ticket of each kind needs before it can be worked without asking: `missing` lists those left empty. */
+export const NEEDED: Record<typeof KINDS[number], readonly Detail[]> = {
+  bug: ['body', 'expected', 'steps', 'acceptance'],
+  feature: ['body', 'acceptance'],
+  task: ['body', 'acceptance'],
+};
 export const ROLES = ['owner', 'admin', 'member'] as const;
 type Role = typeof ROLES[number];
 
@@ -85,6 +98,8 @@ const SCHEMA = `
     title TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL, priority TEXT NOT NULL,
     sector_id INTEGER REFERENCES sectors ON DELETE SET NULL, assignee_id INTEGER REFERENCES users ON DELETE SET NULL,
     author_id INTEGER NOT NULL REFERENCES users, source TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'bug', expected TEXT NOT NULL DEFAULT '', steps TEXT NOT NULL DEFAULT '',
+    environment TEXT NOT NULL DEFAULT '', acceptance TEXT NOT NULL DEFAULT '', verify TEXT NOT NULL DEFAULT '',
     UNIQUE (project_id, number)
   );
   CREATE TABLE IF NOT EXISTS comments (
@@ -156,6 +171,11 @@ export interface Hub {
 export function createHub(o: HubOptions): Hub {
   const db = new DatabaseSync(o.dbFile);
   db.exec(SCHEMA);
+  // a database from before the ticket details gets their columns
+  const columns = new Set((db.prepare('PRAGMA table_info(tickets)').all() as Row[]).map((c) => c.name));
+  for (const [name, type] of [['kind', `TEXT NOT NULL DEFAULT 'bug'`], ...DETAILS.filter((d) => d !== 'body').map((d) => [d, `TEXT NOT NULL DEFAULT ''`])]) {
+    if (!columns.has(name)) db.exec(`ALTER TABLE tickets ADD COLUMN ${name} ${type}`);
+  }
   const one = (sql: string, ...args: unknown[]) => db.prepare(sql).get(...args as never[]) as Row | undefined;
   const all = (sql: string, ...args: unknown[]) => db.prepare(sql).all(...args as never[]) as Row[];
   const run = (sql: string, ...args: unknown[]) => db.prepare(sql).run(...args as never[]);
@@ -491,8 +511,9 @@ export function createHub(o: HubOptions): Hub {
     JOIN projects p ON p.id = t.project_id LEFT JOIN sectors s ON s.id = t.sector_id`;
 
   const summary = (t: Row) => ({
-    ref: `${t.project_key}-${t.number}`, project: t.project_key, title: t.title, status: t.status, priority: t.priority,
+    ref: `${t.project_key}-${t.number}`, project: t.project_key, kind: t.kind, title: t.title, status: t.status, priority: t.priority,
     sector: t.sector_name ?? null, assignee: person(t.assignee_id), author: person(t.author_id),
+    missing: (NEEDED[t.kind as keyof typeof NEEDED] ?? NEEDED.bug).filter((d) => !t[d]),
     createdAt: t.created_at, updatedAt: t.updated_at,
   });
   const ticketRow = (orgId: number, ref: unknown) => {
@@ -501,7 +522,7 @@ export function createHub(o: HubOptions): Hub {
     return t ?? fail(404, 'ticket_not_found');
   };
   const full = (t: Row) => ({
-    ...summary(t), body: t.body, source: t.source ? JSON.parse(t.source as string) : null,
+    ...summary(t), ...Object.fromEntries(DETAILS.map((d) => [d, t[d]])), source: t.source ? JSON.parse(t.source as string) : null,
     comments: all('SELECT author_id, body, created_at FROM comments WHERE ticket_id = ? ORDER BY id', t.id)
       .map((k) => ({ author: person(k.author_id), body: k.body, createdAt: k.created_at })),
   });
@@ -539,7 +560,8 @@ export function createHub(o: HubOptions): Hub {
     const p = projectRow(orgId, b.project);
     if (p.archived) fail(409, 'project_archived');
     const title = text(b.title, TITLE_MAX, true, 'title');
-    const body = text(b.body, TEXT_MAX, false, 'body') ?? '';
+    const kind = oneOf(b.kind, KINDS, 'kind') ?? 'bug';
+    const details = DETAILS.map((d) => text(b[d], TEXT_MAX, false, d) ?? '');
     const priority = oneOf(b.priority, PRIORITIES, 'priority') ?? 'normal';
     const sector = b.sector === undefined || b.sector === null ? null : sectorId(orgId, b.sector);
     const who = b.assignee === undefined ? null : assignee(orgId, b.assignee);
@@ -548,8 +570,9 @@ export function createHub(o: HubOptions): Hub {
       const number = one('SELECT next_number FROM projects WHERE id = ?', p.id)!.next_number as number;
       run('UPDATE projects SET next_number = ? WHERE id = ?', number + 1, p.id);
       const at = now();
-      const id = Number(run(`INSERT INTO tickets (project_id, number, title, body, status, priority, sector_id, assignee_id, author_id, source, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?)`, p.id, number, title, body, priority, sector, who, c.userId, src, at, at).lastInsertRowid);
+      const id = Number(run(`INSERT INTO tickets (project_id, number, title, kind, ${DETAILS.join(', ')}, status, priority, sector_id, assignee_id, author_id, source, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ${DETAILS.map(() => '?').join(', ')}, 'open', ?, ?, ?, ?, ?, ?, ?)`,
+        p.id, number, title, kind, ...details, priority, sector, who, c.userId, src, at, at).lastInsertRowid);
       log(orgId, c.userId, 'ticket.created', id, {});
       return `${p.key}-${number}`;
     });
@@ -563,8 +586,12 @@ export function createHub(o: HubOptions): Hub {
     const next: Row = {};
     const title = text(b.title, TITLE_MAX, false, 'title');
     if (title) next.title = title;
-    const body = text(b.body, TEXT_MAX, false, 'body');
-    if (body !== undefined) next.body = body;
+    for (const d of DETAILS) {
+      const v = text(b[d], TEXT_MAX, false, d);
+      if (v !== undefined) next[d] = v;
+    }
+    const kind = oneOf(b.kind, KINDS, 'kind');
+    if (kind) next.kind = kind;
     const status = oneOf(b.status, STATUSES, 'status');
     if (status) next.status = status;
     const priority = oneOf(b.priority, PRIORITIES, 'priority');
@@ -575,7 +602,7 @@ export function createHub(o: HubOptions): Hub {
     if (!changed.length) return full(t);
     tx(() => {
       run(`UPDATE tickets SET ${changed.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ?`, ...changed.map((k) => next[k]), now(), t.id);
-      const shown = (k: string, v: unknown) => (k === 'assignee_id' ? person(v)?.username ?? null : k === 'sector_id' ? (v === null ? null : one('SELECT name FROM sectors WHERE id = ?', v)?.name) : k === 'body' ? undefined : v);
+      const shown = (k: string, v: unknown) => (k === 'assignee_id' ? person(v)?.username ?? null : k === 'sector_id' ? (v === null ? null : one('SELECT name FROM sectors WHERE id = ?', v)?.name) : (DETAILS as readonly string[]).includes(k) ? undefined : v);
       const fields = Object.fromEntries(changed.map((k) => [k.replace(/_id$/, ''), { from: shown(k, t[k]), to: shown(k, next[k]) }]));
       log(orgId, c.userId, 'ticket.updated', t.id as number, { fields });
     });
