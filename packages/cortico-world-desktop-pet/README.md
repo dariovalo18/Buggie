@@ -310,7 +310,7 @@ Windows 上桌宠窗口从前台窗口拿走键盘，打字框关掉后还回去
 
 ## 形象包
 
-桌宠的身体都来自形象包,Buggie 也是一个。形象包是一个目录,根上有 `figure.json`;内置的 Buggie 在 `web/coo/`、大肥鱼在 `web/whale/`,
+桌宠的身体都来自形象包,Buggie 也是一个。形象包是一个目录,根上有 `figure.json`;内置的 Buggie 在 `web/coo/`、大肥鱼在 `web/whale/`、小星星在 `web/star/`(缩略图由 `scripts/star-thumbs.mjs` 从画法生成),
 其余的从数据目录的 `figures/<目录>/` 和应用给的 `packRoots` 里找。`skin.figure` 是包的 id,`skin.scheme` 是它的打扮(Buggie 的打扮存在 skin 自己的配色和配件字段里)。
 
 包里的代码只在沙箱里跑:桌宠页把它放进 `/figure-frame?pack=<id>`,这个页面的 CSP 把它设成不透明源,网络连接只许 `fetch` 这个包自己目录下的文件(见下文「读包里的文件」;内置包哪里都连不了),

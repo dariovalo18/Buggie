@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createPet, FACES, KIT_EXPRESSIONS, KIT_MOTIONS, STAND } from '../packages/cortico-world-desktop-pet/web/kit/body.js';
 import { cooFigure, defaultSkin, figure } from '../packages/cortico-world-desktop-pet/web/coo/coo.js';
+import { SCHEME_IDS, starFigure, starFrame } from '../packages/cortico-world-desktop-pet/web/star/star.js';
 import { createSfx } from '../packages/cortico-world-desktop-pet/web/sound.js';
 import { haloRect, readLayout, touchGate } from '../packages/cortico-world-desktop-pet/web/body-host.js';
 
@@ -19,13 +20,24 @@ function barePet(onEvent, opts = {}) {
 const run = (pet, seconds) => { for (let i = 0; i < seconds * 60; i++) { pet.step(1 / 60); pet.render(); } };
 
 describe('the words the model can use', () => {
-  it('Coo and the whale do every word of their vocabularies on the kit, and the kit does no word they leave out', () => {
-    for (const pack of ['coo', 'whale']) {
+  it('Coo, the whale and the Little Star do every word of their vocabularies on the kit, and the kit does no word they leave out', () => {
+    for (const pack of ['coo', 'whale', 'star']) {
       const words = (kind) => vocabOf(pack).filter((v) => v.kind === kind).map((v) => v.id).sort();
       expect(words('expression'), pack).toEqual([...KIT_EXPRESSIONS].sort());
-      // Buggie's pack adds its own word, the bug hunt (web/coo/figure.js)
-      expect(words('motion'), pack).toEqual([...KIT_MOTIONS, ...(pack === 'coo' ? ['hunt'] : [])].sort());
+      // Buggie and the Little Star add the bug hunt (web/coo/figure.js, web/star/figure.js)
+      expect(words('motion'), pack).toEqual([...KIT_MOTIONS, ...(pack === 'whale' ? [] : ['hunt'])].sort());
     }
+  });
+
+  it('the Little Star draws every face of the kit in every colour, and walks, sits and is dragged on it', () => {
+    for (const scheme of SCHEME_IDS) {
+      for (const [name, face] of Object.entries(FACES)) {
+        const svg = starFrame(face.f(1.3, { drowse: .8, modeT: .7 }), { look: [4, -2], legs: STAND, low: 2, t: 1.3, blink: .2, eyeClose: .1, swing: 6, zmark: true }, scheme);
+        expect(svg, `${scheme} ${name}`).not.toMatch(/NaN|undefined/);
+      }
+    }
+    const pet = barePet(undefined, { figure: starFigure('pink'), skin: null });
+    for (const w of ['walk', 'sit', 'dance', 'hunt']) { pet.doWord(w); run(pet, 2); }
   });
 
   it('automatic thinking drops the thought trail only while the page shows the thought, and explicit thinking keeps the rings', () => {

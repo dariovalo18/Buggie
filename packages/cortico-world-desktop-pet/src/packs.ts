@@ -1,6 +1,6 @@
 /**
  * Figure packs: the pet's body, as a directory with a `figure.json` manifest. Coo is one, built in
- * (`web/coo/`), and so is the whale maid (`web/whale/`).
+ * (`web/coo/`), and so are the whale maid (`web/whale/`) and the Little Star (`web/star/`).
  *
  * A pack's code runs only inside the sandboxed figure frame (`web/figure-frame.html`): an opaque
  * origin that may fetch only its own pack's files (an installed pack's), talking to the pet page by `postMessage` alone. The body there is
@@ -370,6 +370,7 @@ export interface PackScan { packs: FigurePack[]; problems: PackProblem[] }
 export const BUILTIN_PACKS: ReadonlyArray<{ dir: string; base: string }> = [
   { dir: fileURLToPath(new URL('../web/coo/', import.meta.url)), base: '/web/coo/' },
   { dir: fileURLToPath(new URL('../web/whale/', import.meta.url)), base: '/web/whale/' },
+  { dir: fileURLToPath(new URL('../web/star/', import.meta.url)), base: '/web/star/' },
 ];
 
 /** The built-in packs and those installed under `roots` (each subdirectory one pack); problems are worded in `language`. */
