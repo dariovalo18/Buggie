@@ -28,6 +28,9 @@
   },
   "packageManager": "pnpm@11.28.6",
   "main": "./src/index.ts",
+  "bin": {
+    "buggie-watch": "./bin/buggie-watch.mjs"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./web/*": "./web/*",
@@ -50,7 +53,8 @@
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
     "CHANGELOG.md",
-    "describe.json"
+    "describe.json",
+    "bin"
   ],
   "scripts": {
     "build": "node scripts/build-webui.mjs",

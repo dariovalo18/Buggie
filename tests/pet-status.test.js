@@ -8,6 +8,8 @@ import { SIZE, scaleSlider, sizeEcho } from '../packages/cortico-world-desktop-p
 import { sameLook as realSameLook } from '../packages/cortico-world-desktop-pet/web/looks.js';
 import { restyle, springSize, swapIn, swapOut } from '../packages/cortico-world-desktop-pet/web/swap-motion.js';
 import { tipOf, tipWithoutNote } from '../packages/cortico-world-desktop-pet/web/hints.js';
+import { createDevBugs } from '../packages/cortico-world-desktop-pet/web/dev-bugs.js';
+import { createFocus, createKit } from '../packages/cortico-world-desktop-pet/web/dev-panels.js';
 
 const WEB = new URL('../packages/cortico-world-desktop-pet/web/', import.meta.url);
 const source = readFileSync(new URL('pet-app.js', WEB), 'utf8').replace(/^import .*;$/gm, '');
@@ -54,8 +56,9 @@ function page({ host = false, hash = '', speech = {}, sfx = {}, fetchLooks = asy
     SIZE, scaleSlider, sizeEcho, restyle, springSize, swapIn, swapOut,
     // hover hints (hints.js) are not what these tests look at
     mountHints() {}, tipOf, tipWithoutNote,
+    createDevBugs, createFocus, createKit,
   };
-  win.eval(`const { applyTheme, clamp, f, ICONS, linked, COO_CSS, mini, normalizeSkin, skinCss, createSfx, createSpeech, textSteps, loadBody, t, language, useLanguage, lightWall, dressFloor, modeButton, glowColor, setGlow, bindAppearance, announcePainted, createMic, runFrames, fetchLooks, lookAvailable, lookPicture, sameLook, SIZE, scaleSlider, sizeEcho, restyle, springSize, swapIn, swapOut, mountHints, tipOf, tipWithoutNote } = window.deps;\n${source}\nbody = window.deps.body; window.page = { onOrder, openInput, openMenu, closeBubble, stepWheel, stepSizer, cursor, step: (dt) => { T += dt; stepDialog(dt); stepLines(); stepStatus(); layout(dt); }, interactive: () => bubble.matches(UI_SELECTOR), lines: () => lines, overUi: (el) => el.matches(UI_SELECTOR), REPLIED_FADE, UNANSWERED_FADE, MAX_LINES, LINE_FADE };`);
+  win.eval(`const { applyTheme, clamp, f, ICONS, linked, COO_CSS, mini, normalizeSkin, skinCss, createSfx, createSpeech, textSteps, loadBody, t, language, useLanguage, lightWall, dressFloor, modeButton, glowColor, setGlow, bindAppearance, announcePainted, createMic, runFrames, fetchLooks, lookAvailable, lookPicture, sameLook, SIZE, scaleSlider, sizeEcho, restyle, springSize, swapIn, swapOut, mountHints, tipOf, tipWithoutNote, createDevBugs, createFocus, createKit } = window.deps;\n${source}\nbody = window.deps.body; window.page = { dev, kit, focus, bodyState, onOrder, openInput, openMenu, closeBubble, stepWheel, stepSizer, cursor, step: (dt) => { T += dt; stepDialog(dt); stepLines(); stepStatus(); layout(dt); }, interactive: () => bubble.matches(UI_SELECTOR), lines: () => lines, overUi: (el) => el.matches(UI_SELECTOR), REPLIED_FADE, UNANSWERED_FADE, MAX_LINES, LINE_FADE };`);
   return { ...win.page, bubble: win.document.querySelector('#bubble'), bodyChanges, doc: win.document, sockets, win };
 }
 
@@ -686,5 +689,98 @@ describe('a step that picks several cards', () => {
     await expect.poll(() => p.sockets.length).toBe(1);
     ok.click();
     expect(p.sockets.at(-1).sent.find((m) => m.t === 'dialog')).toMatchObject({ id: 'd', picked: [0, 2] });
+  });
+});
+
+describe('bugs of build and test runs', () => {
+  const connected = async () => {
+    const p = page();
+    await expect.poll(() => p.sockets.length).toBe(1);
+    p.sockets[0].onopen?.();
+    return p;
+  };
+  const problem = { id: 'b1', file: 'a.ts', line: 3, message: 'boom' };
+
+  it('draws a bug for each problem, and a click on one asks the bot to explain it', async () => {
+    const p = await connected();
+    p.onOrder({ t: 'bugs', bugs: [problem], fixed: [] });
+    const bug = p.doc.querySelector('.code-bug');
+    expect(bug).not.toBeNull();
+    expect(p.overUi(bug)).toBe(true);
+    bug.click();
+    expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'bug', id: 'b1' });
+  });
+
+  it('keeps a fixed bug for the hunt and stops it taking clicks; one dropped without a fix goes at once', () => {
+    const p = page();
+    p.onOrder({ t: 'bugs', bugs: [problem, { ...problem, id: 'b2', message: 'other' }], fixed: [] });
+    p.onOrder({ t: 'bugs', bugs: [], fixed: ['b1'] });
+    const left = [...p.doc.querySelectorAll('.code-bug')];
+    expect(left).toHaveLength(1);
+    expect(left[0].classList.contains('fixed')).toBe(true);
+    expect(p.overUi(left[0])).toBe(false);
+  });
+
+  it('offers to explain a copied error and sends it only when the person accepts', async () => {
+    const p = await connected();
+    p.dev.clipboard('just some notes');
+    p.dev.step(.1);
+    expect(p.doc.querySelector('.bubble.offer').hidden).toBe(true);
+    const error = 'TypeError: x is not a function\n    at f (/a.js:1:1)';
+    p.dev.clipboard(error);
+    p.dev.step(.1);
+    const offer = p.doc.querySelector('.bubble.offer');
+    expect(offer.hidden).toBe(false);
+    expect(p.sockets[0].sent.some((m) => m.t === 'explain')).toBe(false);
+    offer.querySelector('.d-pill.primary').click();
+    expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'explain', text: error });
+    expect(offer.hidden).toBe(true);
+  });
+});
+
+describe('the tool kit and focus blocks', () => {
+  const connected = async () => {
+    const p = page();
+    await expect.poll(() => p.sockets.length).toBe(1);
+    p.sockets[0].onopen?.();
+    return p;
+  };
+
+  it('opens the kit, converts its text with a tool and shows the result', async () => {
+    const p = await connected();
+    await p.kit.toggle(true);
+    const panel = p.doc.querySelector('.bubble.kit');
+    expect(panel.hidden).toBe(false);
+    expect(p.overUi(panel)).toBe(true);
+    panel.querySelector('.kit-in').value = '{"a":1}';
+    panel.querySelector('[data-tool="json"]').click();
+    await expect.poll(() => panel.querySelector('.kit-out').hidden).toBe(false);
+    expect(panel.querySelector('.kit-out').textContent).toBe(JSON.stringify({ a: 1 }, null, 2));
+    panel.querySelector('.kit-close').click();
+    expect(panel.hidden).toBe(true);
+  });
+
+  it('starts a block from its action, holds the body still through it and shows the minutes left', async () => {
+    const p = await connected();
+    p.focus.toggle();
+    expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'focus', action: 'start' });
+    p.onOrder({ t: 'prefs', focus: { phase: 'focus', endsAt: Date.now() + 25 * 60_000, minutes: 25 } });
+    expect(p.focus.still).toBe(true);
+    expect(p.focus.minutesLeft()).toBe(25);
+    p.focus.toggle();
+    expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'focus', action: 'stop' });
+  });
+
+  it('notes the break and its end, and offers another block', async () => {
+    const p = await connected();
+    p.onOrder({ t: 'prefs', focus: { phase: 'focus', endsAt: Date.now() + 60_000, minutes: 25 } });
+    p.onOrder({ t: 'prefs', focus: { phase: 'break', endsAt: Date.now() + 60_000, minutes: 5 } });
+    const note = p.doc.querySelector('.bubble.note');
+    expect(note.hidden).toBe(false);
+    p.onOrder({ t: 'prefs', focus: null });
+    expect(note.hidden).toBe(false);
+    note.querySelector('.d-pill.primary').click();
+    expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'focus', action: 'start' });
+    expect(note.hidden).toBe(true);
   });
 });

@@ -24,6 +24,8 @@ import { bindAppearance } from './appearance.js';
 import { createMic } from './mic.js';
 import { runFrames } from './frame-loop.js';
 import { mountHints, tipOf, tipWithoutNote } from './hints.js';
+import { createDevBugs } from './dev-bugs.js';
+import { createFocus, createKit } from './dev-panels.js';
 
 const $ = (s) => document.querySelector(s);
 const host = window.petHost || null;
@@ -117,6 +119,18 @@ addEventListener('resize', () => {
   // the World reads walk targets and drop spots against the stage the pet is on now
   send({ t: 'hello', screen: { w: innerWidth, h: innerHeight } });
 });
+
+/* ---------- bugs of build and test runs, and the offer to explain a copied error (dev-bugs.js) ---------- */
+const dev = createDevBugs({
+  doc: document, send, sfx, t, body: () => body, words: () => words, bounds,
+  free: () => !item && !queue.length && !listen.phase && bubble.hidden,
+  place: (el, a) => place(el, a, 18 * prefs.bubbleSize),
+});
+host?.onClipboard?.((text) => dev.clipboard(text));
+const overHead = () => at()?.bubble ?? null;
+const placeOver = (el, a) => place(el, a, 18 * prefs.bubbleSize);
+const kit = createKit({ doc: document, t, sfx, host, anchor: overHead, place: placeOver });
+const focus = createFocus({ doc: document, t, send, sfx, words: () => words, act: (w) => { acts.push(w); holdRoam(20); }, anchor: overHead, place: placeOver, changed: () => refreshButtons() });
 
 /* ---------- connection ---------- */
 let ws = null, backoff = 500, watching = false;
@@ -390,6 +404,8 @@ function applyPrefs(p) {
   if (p.voice && typeof p.voice === 'object') prefs.voice = { ...prefs.voice, ...p.voice };
   if (typeof p.doubleClickChat === 'boolean') prefs.doubleClickChat = p.doubleClickChat;
   if (typeof p.statusBubble === 'boolean') { prefs.statusBubble = p.statusBubble; setBody({ thoughtShown: p.statusBubble }); }
+  if ('focus' in p) focus.set(p.focus);
+  if (typeof p.clipboardErrors === 'boolean') { host?.watchClipboard?.(p.clipboardErrors); if (!p.clipboardErrors) dev.closeOffer(); }
   if (typeof p.saidBubbles === 'boolean') { prefs.saidBubbles = p.saidBubbles; if (!p.saidBubbles) for (const line of lines) if (!line.live) fadeLine(line); }
   if (typeof p.lockFrameRate === 'boolean') prefs.lockFrameRate = p.lockFrameRate;
   if (typeof p.frameRate === 'number' && p.frameRate >= 0) prefs.frameRate = p.frameRate;
@@ -421,7 +437,8 @@ async function switchLanguage(code) {
 
 function onOrder(m) {
   switch (m.t) {
-    case 'init': restorePosition(m.startX, m.startY); applyPrefs(m); if (!host) announcePainted(); break;
+    case 'init': restorePosition(m.startX, m.startY); applyPrefs(m); dev.set(m.bugs); if (!host) announcePainted(); break;
+    case 'bugs': dev.set(m.bugs, m.fixed); break;
     case 'prefs': applyPrefs(m); break;
     case 'watching': watching = true; stopMic(); break;
     // the settings window's 「在桌面上隐藏」: the same as the menu's 「隐藏」
@@ -1426,6 +1443,22 @@ const ACTIONS = {
       else window.open('/dress', '_blank');
     },
   },
+  kit: {
+    icon: () => ICONS.wrench,
+    on: () => kit.open || undefined,
+    state: () => t('action.kit'),
+    run: () => void kit.toggle(),
+  },
+  // a block's minutes left show on the button while it runs
+  focus: {
+    keep: true,
+    icon: () => ICONS.timer,
+    badge: () => (focus.phase ? `${focus.minutesLeft()}'` : ''),
+    on: () => !!focus.phase,
+    state: () => (focus.phase === 'focus' ? t('action.focusOn', { minutes: focus.minutesLeft() })
+      : focus.phase === 'break' ? t('action.focusBreak', { minutes: focus.minutesLeft() }) : t('action.focusOff')),
+    run: () => focus.toggle(),
+  },
   worlds: {
     // only where the embedding app has a World list to show
     available: () => !!prefs.bot?.buttons?.worlds,
@@ -2120,7 +2153,7 @@ function writePointer(now) {
 }
 
 // the menu itself covers the whole page without taking clicks; its two columns are what can be pointed at
-const UI_SELECTOR = '.bubble:not(.status):not(.fading):not([hidden]), .menu:not([hidden]):not(.leaving) > *, .tools:not([hidden]):not(.leaving), .wheel:not([hidden]):not(.leaving), .sizer:not([hidden]):not(.leaving)';
+const UI_SELECTOR = '.code-bug:not(.fixed), .bubble:not(.status):not(.fading):not([hidden]), .menu:not([hidden]):not(.leaving) > *, .tools:not([hidden]):not(.leaving), .wheel:not([hidden]):not(.leaving), .sizer:not([hidden]):not(.leaving)';
 const overUi = (e) => e.target.closest && e.target.closest(UI_SELECTOR);
 
 /**
@@ -2546,12 +2579,15 @@ function frame(steps, now, last) {
     steps.forEach((dt, i) => {
       T += dt;
       stepActs();
+      dev.step(dt);
+      kit.step();
+      focus.step();
       stepDialog(dt);
       stepTalkRead(dt);
       stepTalkMotion();
       stepLines();
       stepStatus();
-      setBody({ dialogOpen: !!item || !!listen.phase, still: !menu.hidden });
+      setBody({ dialogOpen: !!item || !!listen.phase, still: !menu.hidden || focus.still });
       if (drawnScale.step(dt)) body?.set({ bounds: bounds() });
       body?.tick(dt, drawn && i === steps.length - 1);
     });

@@ -65,6 +65,24 @@ const DESCRIBE: WorldDescribe = {
       description: { zh: '使用者换了形象或装扮,或形象没能加载。', en: 'The person switched the figure or its dress, or a figure failed to load.' },
     },
     {
+      type: 'desktop-pet.build',
+      description: { zh: '使用者用 buggie-watch 跑的构建或测试失败了,或之前的问题修好了;每个问题是屏幕上的一只虫子。', en: "A build or test run the person started with buggie-watch failed, or the earlier problems are fixed; each problem is a bug on the screen." },
+    },
+    {
+      type: 'desktop-pet.explain',
+      description: { zh: '使用者点了屏幕上的一只虫子,或复制了一段报错并接受了解释,想听你解释问题和怎么修。', en: 'The person clicked a bug on the screen, or copied an error and accepted the offer to explain it, and wants the problem and its fix explained.' },
+      trigger: 'preempt',
+    },
+    {
+      type: 'desktop-pet.focus',
+      description: { zh: '使用者开始或提前结束了一段专注,或专注转入休息、休息结束。', en: 'The person started or ended a focus block early, or a block turned into its break, or the break ended.' },
+    },
+    {
+      type: 'desktop-pet.github',
+      description: { zh: '使用者在 GitHub 上关于拉取请求和议题的新通知。', en: "The person's new GitHub notifications on pull requests and issues." },
+      trigger: 'debounce',
+    },
+    {
       type: SELF_TYPE,
       description: { zh: '桌宠自己说的话与做的事,只给对话页显示,不送给 bot。', en: 'What the pet said and did, kept for the chat page and never delivered to the bot.' },
     },

@@ -6,6 +6,8 @@
  *   the figure; in a browser tab it draws a floor.
  * - `/dress`: the dressing page; changes go through `POST /api/skin` and `POST /api/prefs`, and the saved
  *   looks are read at `GET /api/looks` and written whole through `POST /api/looks`.
+ * - `GET /api/bugs`: the bugs on the screen (`{ bugs }`); `POST /api/bugs`: a build or test run's report (src/bugs.ts), 400 when it is
+ *   not one; both 404 without `bugs`.
  * - `POST /api/speech` (`{ text }`): the syllables the pet page's speech plays for a bubble's text (src/speech).
  * - `/api/figures`: the figure packs (src/packs.ts) the pages may load, Coo's first, each with whether it
  *   can be uninstalled (`removable`); `/packs/<id>/…`: an installed pack's files (a built-in one is under
@@ -94,6 +96,8 @@ export interface PetServerOptions {
   text?(): PetText;
   /** Whether the OBS overlay is served; off when absent. */
   overlay?(): boolean;
+  /** The bugs on the screen, and a run's report to take: false when the body is not a report. */
+  bugs?: { list(): unknown[]; report(body: unknown): boolean };
   /** The syllables `text` is spoken as; `POST /api/speech` answers 404 without it. */
   speech?(text: string): SpeechUnit[];
 }
@@ -351,6 +355,11 @@ export class PetServer {
       return this.sendFile(res, full, PACK_CSP, req.headers.origin === 'null');
     }
     if (req.method === 'GET' && path === '/api/state') return json(res, 200, this.opts.snapshot());
+    if (path === '/api/bugs' && this.opts.bugs && req.method === 'GET') return json(res, 200, { bugs: this.opts.bugs.list() });
+    if (path === '/api/bugs' && this.opts.bugs && req.method === 'POST') {
+      const msg = parse(await readBody(req) ?? '');
+      return this.opts.bugs.report(msg) ? json(res, 200, { ok: true }) : json(res, 400, { error: 'bad report' });
+    }
     if (req.method === 'POST' && path === '/api/speech') {
       const msg = parse(await readBody(req) ?? '');
       if (!this.opts.speech) { res.writeHead(404).end(); return; }

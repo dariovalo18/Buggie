@@ -21,7 +21,7 @@
  * The tray's words follow the app language the page reports (`petHost.setLanguage`), from the pages'
  * tables (web/i18n); the windows' titles are the pages' own.
  */
-const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, screen, session, shell, systemPreferences } = require('electron');
+const { app, BrowserWindow, Menu, Tray, clipboard, ipcMain, nativeImage, screen, session, shell, systemPreferences } = require('electron');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { createCursorSource } = require('./cursor.cjs');
@@ -49,6 +49,10 @@ async function pageText(code) {
 const CURSOR_EVERY_MS = process.platform === 'win32' ? 15 : 100;
 /** Milliseconds between the reads of the other windows, while the page asks for them. */
 const WINDOWS_EVERY_MS = 700;
+/** How often the clipboard is read while the page asks (`watchClipboard`), and the most characters of it sent on (web/dev-errors.js CLIP_MAX, plus one). */
+const CLIPBOARD_EVERY_MS = 1000, CLIPBOARD_MAX = 8001;
+/** The most characters of the clipboard the tool kit reads. */
+const KIT_CLIPBOARD_MAX = 100_000;
 /**
  * Milliseconds between the reads of the foreground window on Windows, for the topmost assertion and the
  * check for a fullscreen window covering the pet's display.
@@ -371,6 +375,38 @@ function runPetHost({ url, parentPid = 0, tray: withTray = true }) {
     if (on && windows.available) { windowTimer = setInterval(readWindows, WINDOWS_EVERY_MS); readWindows(); }
   };
 
+  // the clipboard's text, read only while the page asks (the World's `clipboardErrors`) and sent when it changes; what
+  // was there when reading started is not sent
+  let clipboardTimer = null, lastClip = '';
+  // the clipboard's text, awaited (Electron's `readText` answers with a promise); a clipboard held by another program,
+  // or holding no text, reads as empty
+  const readClip = async () => {
+    try {
+      const text = await clipboard.readText();
+      return typeof text === 'string' ? text : '';
+    } catch {
+      return '';
+    }
+  };
+  const watchClipboard = (on) => {
+    clearInterval(clipboardTimer);
+    clipboardTimer = null;
+    if (!on) return;
+    let reading = false;
+    void readClip().then((text) => { lastClip = text; });
+    clipboardTimer = setInterval(async () => {
+      if (reading) return;
+      reading = true;
+      const text = await readClip();
+      reading = false;
+      // switched off while it was read
+      if (!clipboardTimer || text === lastClip) return;
+      lastClip = text;
+      if (win && text.trim()) win.webContents.send('pet:clipboard', text.slice(0, CLIPBOARD_MAX));
+    }, CLIPBOARD_EVERY_MS);
+  };
+  app.once('will-quit', () => clearInterval(clipboardTimer));
+
   /** The display the window belongs on: the one it was moved to, or the primary display once that one is gone. */
   const display = () => screen.getAllDisplays().find((d) => d.id === displayId) ?? screen.getPrimaryDisplay();
 
@@ -526,6 +562,10 @@ function runPetHost({ url, parentPid = 0, tray: withTray = true }) {
   onPet('pet:passWhenFullscreen', (_e, on) => { passWhenFullscreen = !!on; });
   onPet('pet:clickThrough', (_e, on) => { trayThrough = !!on; lockMouse(); });
   onPet('pet:watchWindows', (_e, on) => watchWindows(!!on));
+  onPet('pet:watchClipboard', (_e, on) => watchClipboard(!!on));
+  // the tool kit's text: read when it opens, written by its copy button (a write is not offered back as a copied error)
+  handlePet('pet:readClipboard', async () => (await readClip()).slice(0, KIT_CLIPBOARD_MAX));
+  onPet('pet:writeClipboard', (_e, text) => { lastClip = String(text); void Promise.resolve(clipboard.writeText(lastClip)).catch(() => {}); });
   onPet('pet:openDress', () => openDress());
   let language = 'zh';
   onPet('pet:language', (_e, code) => {

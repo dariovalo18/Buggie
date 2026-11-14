@@ -35,6 +35,13 @@ contextBridge.exposeInMainWorld('petHost', {
   watchWindows: (on) => ipcRenderer.send('pet:watchWindows', !!on),
   /** Those windows while they are read, each time they change: `{ ledges, windows }` in page pixels as web/figure-frame.js describes them, or null when they cannot be read. */
   onWindows: (cb) => ipcRenderer.on('pet:windows', (_e, desk) => cb(Array.isArray(desk?.ledges) && Array.isArray(desk?.windows) ? desk : null)),
+  /** Whether the window reads the clipboard: on while the World's `clipboardErrors` is. */
+  watchClipboard: (on) => ipcRenderer.send('pet:watchClipboard', !!on),
+  /** The clipboard's text each time it changes while it is read, cut to 8001 characters. */
+  onClipboard: (cb) => ipcRenderer.on('pet:clipboard', (_e, text) => cb(typeof text === 'string' ? text : '')),
+  /** The clipboard's text, cut to 100 000 characters. */
+  readClipboard: () => ipcRenderer.invoke('pet:readClipboard'),
+  writeClipboard: (text) => ipcRenderer.send('pet:writeClipboard', String(text)),
   /** Where the cursor is, in page pixels, or null off the window: called every 15 ms on Windows, 10 times a second elsewhere. */
   onCursor: (cb) => ipcRenderer.on('pet:cursor', (_e, p) => cb(p)),
   /** Screen pixels behind `rect`, minus `skip` rects (page coordinates), as a flat [r, g, b, …]; null where the screen cannot be read. */

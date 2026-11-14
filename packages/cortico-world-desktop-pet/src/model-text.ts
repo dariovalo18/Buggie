@@ -42,6 +42,23 @@ type NotAsked = 'unavailable' | 'timeout' | 'no';
  */
 export type NoPortrait = 'tab' | 'hidden' | 'no-body' | 'capture' | 'timeout' | 'gone';
 
+/** Why a GitHub notification reached the person, by GitHub's `reason`; another reason is written as GitHub names it. */
+const GITHUB_REASONS_ZH: Record<string, string> = {
+  review_requested: '请对方审查', author: '对方发起的,有了新动态', comment: '有新评论', mention: '有人提到了对方',
+  team_mention: '对方所在的团队被提到', assign: '指派给了对方', state_change: '状态变了', ci_activity: 'CI 有了结果',
+};
+const GITHUB_REASONS_EN: Record<string, string> = {
+  review_requested: 'their review was requested', author: 'they opened it and it has new activity', comment: 'a new comment', mention: 'they were mentioned',
+  team_mention: 'their team was mentioned', assign: 'it was assigned to them', state_change: 'its state changed', ci_activity: 'CI finished',
+};
+
+/** A command as inline code, and text as a fenced block one backtick longer than any run of backticks in it. */
+const code = (s: string) => '`' + s.replaceAll('`', "'") + '`';
+const fence = (s: string) => {
+  const ticks = '`'.repeat(Math.max(3, ...[...s.matchAll(/`+/g)].map((m) => m[0].length + 1)));
+  return `${ticks}\n${s}\n${ticks}`;
+};
+
 const zh = {
   /** Locale of the weekday in an event's time stamp. */
   dateLocale: 'zh-CN',
@@ -63,6 +80,25 @@ const zh = {
   /** `at`: how far across the screen, null when the page did not say. */
   dropped: (user: string, at: string | null, crashed: boolean) => `${user}把你拎起来,放到了屏幕横向 ${at ?? '某'} 处${crashed ? ',你摔晕了一会儿' : ''}`,
   crashed: '你重重落地,摔晕了一会儿',
+
+  /** A build or test run that failed: `problems` as `problemLine` writes them, `more` left out, `fixed` gone since the run before. */
+  buildFailed: (command: string, cwd: string, problems: string[], more: number, fixed: number) =>
+    `[build] ${code(command)}(在 ${cwd})失败了,屏幕上有 ${problems.length + more} 只虫子:\n${problems.join('\n')}` +
+    (more ? `\n……另有 ${more} 个` : '') + (fixed ? `\n上次的问题里有 ${fixed} 个已经不见了。` : ''),
+  buildFixed: (command: string, cwd: string, n: number) => `[build] ${code(command)}(在 ${cwd})通过了,屏幕上的 ${n} 只虫子被你吃掉了。`,
+  explainBug: (user: string, command: string, cwd: string, problem: string, tail: string) =>
+    `[explain] ${user}点了屏幕上的一只虫子,想听你解释这个问题和怎么修。来自 ${code(command)}(在 ${cwd}):\n${problem}` +
+    (tail ? `\n输出的最后几行:\n${fence(tail)}` : ''),
+  explainCopied: (user: string, text: string) => `[explain] ${user}复制了这段报错,想听你解释它的意思和怎么修:\n${fence(text)}`,
+
+  focusStarted: (user: string, minutes: number) => `[focus] ${user}开始了 ${minutes} 分钟的专注。专注期间你安静待着,不主动搭话;对方找你时照常回答。`,
+  focusBreak: (user: string, minutes: number) => `[focus] 专注结束了,${user}休息 ${minutes} 分钟;你在休息时睡觉。`,
+  focusDone: (user: string) => `[focus] ${user}的休息结束了。`,
+  focusStopped: (user: string) => `[focus] ${user}提前结束了专注。`,
+  /** GitHub notifications, one line each: `repo`, why it reached the person (GitHub's reason), the subject's title. */
+  github: (lines: string[]) => `[github] 新通知:\n${lines.join('\n')}`,
+  githubLine: (repo: string, reason: string, kind: 'PullRequest' | 'Issue' | string, title: string) =>
+    `- ${repo} ${kind === 'Issue' ? '议题' : '拉取请求'}「${title}」:${GITHUB_REASONS_ZH[reason] ?? reason}`,
 
   figureFailed: (name: string, reason: string, body: string, note: string) => `[figure] ${name}没能显示出来(${reason}),你现在是${body}。${note ? `\n${note}` : ''}`,
   reasonUnknown: '原因不明',
@@ -207,6 +243,22 @@ const en: typeof zh = {
   thrown: (user, crashed) => `${user} picked you up and threw you${crashed ? '; you landed hard and were knocked out for a moment' : ''}`,
   dropped: (user, at, crashed) => `${user} picked you up and put you down ${at ? `at ${at} across the screen` : 'somewhere on the screen'}${crashed ? '; you were knocked out for a moment' : ''}`,
   crashed: 'You landed hard and were knocked out for a moment',
+
+  buildFailed: (command, cwd, problems, more, fixed) =>
+    `[build] ${code(command)} (in ${cwd}) failed; ${problems.length + more} bugs are on the screen:\n${problems.join('\n')}` +
+    (more ? `\n…and ${more} more` : '') + (fixed ? `\n${fixed} of the last run's problems are gone.` : ''),
+  buildFixed: (command, cwd, n) => `[build] ${code(command)} (in ${cwd}) passes now; you ate the ${n} bugs on the screen.`,
+  explainBug: (user, command, cwd, problem, tail) =>
+    `[explain] ${user} clicked a bug on the screen and wants you to explain this problem and how to fix it. From ${code(command)} (in ${cwd}):\n${problem}` +
+    (tail ? `\nThe end of the output:\n${fence(tail)}` : ''),
+  explainCopied: (user, text) => `[explain] ${user} copied this error and wants you to explain what it means and how to fix it:\n${fence(text)}`,
+
+  focusStarted: (user, minutes) => `[focus] ${user} started ${minutes} minutes of focus. Stay quiet and do not start a conversation until it ends; answer as usual when they talk to you.`,
+  focusBreak: (user, minutes) => `[focus] The focus block is over; ${user} takes a ${minutes}-minute break, which you spend asleep.`,
+  focusDone: (user) => `[focus] ${user}'s break is over.`,
+  focusStopped: (user) => `[focus] ${user} ended the focus block early.`,
+  github: (lines) => `[github] New notifications:\n${lines.join('\n')}`,
+  githubLine: (repo, reason, kind, title) => `- ${repo} ${kind === 'Issue' ? 'issue' : 'pull request'} "${title}": ${GITHUB_REASONS_EN[reason] ?? reason}`,
 
   figureFailed: (name, reason, body, note) => `[figure] ${name} could not be shown (${reason}); you are now ${body}.${note ? `\n${note}` : ''}`,
   reasonUnknown: 'reason unknown',

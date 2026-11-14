@@ -13,7 +13,7 @@ export const DESKTOP_PET_ID = 'desktop-pet';
 export const USER_MAX = 20;
 
 /** The actions that can show as buttons beside the pet on hover, in their order; the right-click menu shows the same ones. */
-export const PET_ACTIONS = ['chat', 'voice', 'roam', 'theme', 'sound', 'hide', 'size', 'dress', 'worlds'] as const;
+export const PET_ACTIONS = ['chat', 'voice', 'roam', 'theme', 'sound', 'hide', 'size', 'dress', 'worlds', 'kit', 'focus'] as const;
 export type PetAction = typeof PET_ACTIONS[number];
 /** Most hover buttons. */
 export const MAX_HOVER_BUTTONS = 6;
@@ -227,6 +227,15 @@ export interface DesktopPetConfigSection extends WorldSection {
   statusBubble: boolean;
   /** Keep what the person typed, said or sent from the chat page above the pet until it replies. */
   saidBubbles: boolean;
+  /** Offer to explain copied text that looks like a programming error (web/dev-errors.js); the pet window reads the clipboard while on. */
+  clipboardErrors: boolean;
+  /** A focus block and the break after it (src/focus.ts), in minutes. */
+  focus: { minutes: number; breakMinutes: number };
+  /**
+   * GitHub, read every few minutes while `enabled` (src/github.ts): the Actions runs of `repos` (`owner/repo` joined by
+   * commas) become bugs while they fail, and the person's notifications on pull requests and issues become events.
+   */
+  github: { enabled: boolean; repos: string };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -287,6 +296,8 @@ export const BUBBLE_SIZE_MIN = .8, BUBBLE_SIZE_MAX = 1.6;
 export const BUBBLE_SPEED_MIN = .5, BUBBLE_SPEED_MAX = 2;
 /** The halo's reach in pixels: 0 is off; past GLOW_MAX it reads as a gray cloud rather than an outline. */
 export const GLOW_MAX = 16, GLOW_DEFAULT = 7;
+/** The range of a focus block and of a break, in minutes. */
+export const FOCUS_MIN = 5, FOCUS_MAX = 120;
 /** The range of `asr.segment.thresholdDb`, in dBFS. */
 export const THRESHOLD_DB_MIN = -80, THRESHOLD_DB_MAX = 0;
 
@@ -308,6 +319,9 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   typeKey: { enabled: false, hotkey: DEFAULT_TYPE_KEY },
   statusBubble: true,
   saidBubbles: true,
+  clipboardErrors: true,
+  focus: { minutes: 25, breakMinutes: 5 },
+  github: { enabled: false, repos: '' },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
@@ -352,6 +366,11 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
         [`${K}.doubleClickChat`]: { type: 'boolean', title: c.doubleClickChat.title, description: c.doubleClickChat.description, 'x-hot': true },
         [`${K}.statusBubble`]: { type: 'boolean', title: c.statusBubble.title, description: c.statusBubble.description, 'x-hot': true },
         [`${K}.saidBubbles`]: { type: 'boolean', title: c.saidBubbles.title, description: c.saidBubbles.description, 'x-hot': true },
+        [`${K}.clipboardErrors`]: { type: 'boolean', title: c.clipboardErrors.title, description: c.clipboardErrors.description, 'x-hot': true },
+        [`${K}.focus.minutes`]: { type: 'integer', title: c.focusMinutes.title, minimum: FOCUS_MIN, maximum: FOCUS_MAX, 'x-suffix': c.focusMinutes.suffix, 'x-hot': true },
+        [`${K}.focus.breakMinutes`]: { type: 'integer', title: c.breakMinutes.title, minimum: 1, maximum: FOCUS_MAX, 'x-suffix': c.focusMinutes.suffix, 'x-hot': true },
+        [`${K}.github.enabled`]: { type: 'boolean', title: c.githubEnabled.title, description: c.githubEnabled.description, 'x-hot': true },
+        [`${K}.github.repos`]: { type: 'string', title: c.githubRepos.title, description: c.githubRepos.description, 'x-hot': true },
         [`${K}.selfAdjust`]: { type: 'string', title: c.selfAdjust.title, enum: [...SELF_ADJUST], description: c.selfAdjust.description, 'x-hot': true },
         [`${K}.window.enabled`]: { type: 'boolean', title: c.windowEnabled.title, 'x-hot': false },
         [`${K}.window.scale`]: { type: 'number', title: c.scale.title, minimum: SCALE_MIN, maximum: SCALE_MAX, multipleOf: .05, 'x-hot': true },

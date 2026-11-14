@@ -92,6 +92,11 @@ const KEYS = {
   saidBubbles: `${K}.saidBubbles`,
   wakeOn: `${K}.touch.wakeOn`,
   selfAdjust: `${K}.selfAdjust`,
+  clip: `${K}.clipboardErrors`,
+  focusMinutes: `${K}.focus.minutes`,
+  breakMinutes: `${K}.focus.breakMinutes`,
+  github: `${K}.github.enabled`,
+  githubRepos: `${K}.github.repos`,
 } as const;
 
 /** `touch.wakeOn` in the row's order, and the touches 「自定义…」 picks from (the World's TOUCH_KINDS). */
@@ -113,7 +118,7 @@ interface TypeKeyState { enabled: boolean; hotkey: string; keyLabel: string; pro
 
 /** The pet's actions in the menu's order (the World's PET_ACTIONS), with the icon each shows. */
 const ACTIONS: ReadonlyArray<[id: string, icon: string]> = [
-  ['chat', 'chat'], ['voice', 'mic'], ['roam', 'roam_calm'], ['theme', 'moon'], ['sound', 'sound'], ['hide', 'eyeOff'], ['size', 'resize'], ['dress', 'shirt'], ['worlds', 'boxes'],
+  ['chat', 'chat'], ['voice', 'mic'], ['roam', 'roam_calm'], ['theme', 'moon'], ['sound', 'sound'], ['hide', 'eyeOff'], ['size', 'resize'], ['dress', 'shirt'], ['worlds', 'boxes'], ['kit', 'wrench'], ['focus', 'timer'],
 ];
 /** Kinds of sound, each a switch under `worlds.desktop-pet.sounds.<kind>`: the kinds the pet page mutes by. */
 const SOUND_KINDS = Object.keys(PAGE_SOUND_KINDS);
@@ -121,6 +126,8 @@ const SOUND_KINDS = Object.keys(PAGE_SOUND_KINDS);
 const SPEECH_LEVELS = ['low', 'mid', 'high', 'custom'] as const;
 const SPEECH_PITCH = { steps: { low: 300, mid: 400, high: 500 } as Record<string, number>, min: 200, max: 700 };
 const SPEECH_RATE = { steps: { low: 10, mid: 13, high: 16 } as Record<string, number>, min: 6, max: 20 };
+/** The range of a focus block in minutes (the World's FOCUS_MIN and FOCUS_MAX); a break starts at one. */
+const FOCUS_MIN_MINUTES = 5, FOCUS_MAX_MINUTES = 120;
 /** Most hover buttons (the World's MAX_HOVER_BUTTONS). */
 const MAX_HOVER = 6;
 
@@ -545,6 +552,41 @@ async function mount(ctx: PageContext): Promise<void> {
   const cua = cuaSection(ctx, row);
   root.append(sounds.el, speechSheet.el, cua.el);
 
+  /* ---------- programming: copied errors, focus blocks, GitHub ---------- */
+  const devSheet = ui.sheet({ title: S.groupDev });
+  const clip = ui.checkbox(S.clip, { onChange: (on) => void save(KEYS.clip, on, GROUP, clip.el) });
+  /** A whole number of minutes in FOCUS_MIN_MINUTES..FOCUS_MAX_MINUTES (`min` for the break), saved when it changes. */
+  const minutes = (key: string, min: number) => {
+    const input = ui.input({ type: 'number' });
+    input.min = String(min); input.max = String(FOCUS_MAX_MINUTES); input.step = '1';
+    input.addEventListener('change', () => {
+      const n = Math.round(Number(input.value));
+      if (input.value === '' || !Number.isFinite(n) || n < min || n > FOCUS_MAX_MINUTES) { input.value = input.dataset.saved ?? ''; return; }
+      input.value = String(n);
+      if (input.value !== input.dataset.saved) { input.dataset.saved = input.value; void save(key, n, GROUP, input); }
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+    return input;
+  };
+  const focusMinutes = minutes(KEYS.focusMinutes, FOCUS_MIN_MINUTES), breakMinutes = minutes(KEYS.breakMinutes, 1);
+  const focusBox = ui.h('div', 'companion-rangebox');
+  focusBox.append(ui.h('span', 'companion-rangeval', S.focusMinutes), focusMinutes, ui.h('span', 'companion-rangeval', S.minutesUnit),
+    ui.h('span', 'companion-rangeval', S.breakMinutes), breakMinutes, ui.h('span', 'companion-rangeval', S.minutesUnit));
+  const github = ui.checkbox(S.github, { onChange: (on) => { githubRepos.hidden = !on; void save(KEYS.github, on, GROUP, github.el); } });
+  const githubRepos = ui.input();
+  githubRepos.placeholder = S.githubRepos;
+  githubRepos.hidden = true;
+  githubRepos.addEventListener('change', () => {
+    const value = githubRepos.value.trim();
+    githubRepos.value = value;
+    if (value !== githubRepos.dataset.saved) { githubRepos.dataset.saved = value; void save(KEYS.githubRepos, value, GROUP, githubRepos); }
+  });
+  githubRepos.addEventListener('keydown', (e) => { if (e.key === 'Enter') githubRepos.blur(); });
+  const githubBox = ui.h('div', 'companion-switchbox');
+  githubBox.append(github.el, githubRepos);
+  devSheet.body.append(row(S.clipLabel, clip.el, S.clipHint), row(S.focusLabel, focusBox, S.focusHint), row(S.githubLabel, githubBox, S.githubHint));
+  root.append(devSheet.el);
+
   /* ---------- other: the OBS overlay, the context ring ---------- */
   const other = ui.sheet({ title: S.groupOther });
   const overlay = ui.checkbox(S.overlay, { onChange: (on) => { overlayUrlBox.hidden = !on || !overlayUrl.value; void save(KEYS.overlay, on, GROUP, overlay.el); } });
@@ -568,6 +610,7 @@ async function mount(ctx: PageContext): Promise<void> {
     { value: 'sounds', label: S.soundTitle, el: sounds.el },
     { value: 'speech', label: S.speechTitle, el: speechSheet.el },
     { value: 'cua', label: CUA.title, el: cua.el },
+    { value: 'dev', label: S.groupDev, el: devSheet.el },
     { value: 'other', label: S.groupOther, el: other.el },
   ]).el);
 
@@ -697,6 +740,12 @@ async function mount(ctx: PageContext): Promise<void> {
     if (typeof values[KEYS.statusBubble] === 'boolean') statusBubble.setChecked(values[KEYS.statusBubble] as boolean);
     if (typeof values[KEYS.saidBubbles] === 'boolean') saidBubbles.setChecked(values[KEYS.saidBubbles] as boolean);
     if (typeof values[KEYS.overlay] === 'boolean') overlay.setChecked(values[KEYS.overlay] as boolean);
+    if (typeof values[KEYS.clip] === 'boolean') clip.setChecked(values[KEYS.clip] as boolean);
+    for (const [input, key] of [[focusMinutes, KEYS.focusMinutes], [breakMinutes, KEYS.breakMinutes]] as const) {
+      if (typeof values[key] === 'number' && active !== input) { input.value = String(values[key]); input.dataset.saved = input.value; }
+    }
+    if (typeof values[KEYS.github] === 'boolean') { github.setChecked(values[KEYS.github] as boolean); githubRepos.hidden = !github.checked; }
+    if (typeof values[KEYS.githubRepos] === 'string' && active !== githubRepos) { githubRepos.value = values[KEYS.githubRepos] as string; githubRepos.dataset.saved = githubRepos.value; }
     // a popup open over the page keeps the rows as they are until it is saved or closed
     const state = await habitState;
     if (!root.ownerDocument.querySelector('.companion-popup')) takeHabits(state);

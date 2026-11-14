@@ -18,7 +18,7 @@
  * hints, the default name for the person, and which recognizer and recognition language voice
  * input uses by default. The console's text follows the console request's language.
  */
-import type { spawn } from 'node:child_process';
+import { execFile, type spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -59,6 +59,9 @@ import type { Answer } from './cua/engine-ipc.ts';
 import { PackImporter } from './pack-import.ts';
 import { dressTable, planSettings, sayScale, type SettingChange } from './self.ts';
 import { MODEL_TEXT, type ModelLanguage, type ModelText, type NoPortrait } from './model-text.ts';
+import { BugBoard, problemLine, readReport, type BugReport } from './bugs.ts';
+import { FocusTimer, type FocusChange, type FocusState } from './focus.ts';
+import { GithubWatch, readRepos, type Notice } from './github.ts';
 
 /** The console panels, titled in `language`. */
 function desktopPetPanelDecls(language: Language = 'zh'): WorldPanelDecl[] {
@@ -94,6 +97,10 @@ const WALK_TIMEOUT_MS = 30_000;
 const PORTRAIT_TIMEOUT_MS = 5000;
 /** Touches of one kind closer than this are reported as one event with a count. */
 const TOUCH_MERGE_MS = 2500;
+/** Problems a `[build]` event lists; the rest are counted. */
+const BUILD_PROBLEMS_SHOWN = 5;
+/** Most characters of copied text an `[explain]` event carries (web/dev-errors.js `CLIP_MAX`). */
+const CLIP_MAX = 8000;
 /** How long a confirmation bubble waits for an answer, counted from when the page shows it. */
 const CONFIRM_TIMEOUT_MS = 60_000;
 /** How long a confirmation waits in all, while the page has not shown it (lines ahead of it in the queue). */
@@ -227,8 +234,10 @@ export interface DesktopPetWorldOptions {
   persist: (patch: DeepPartial<DesktopPetConfigSection>) => void;
   runtimesRoot: () => string;
   modelsDir: () => string;
-  /** Downloads; tests pass a local stand-in. */
+  /** Downloads and GitHub's API; tests pass a local stand-in. */
   fetchImpl?: typeof fetch;
+  /** The GitHub token; `githubToken` (the environment, then the gh command line) when absent. */
+  githubToken?: () => Promise<string | null>;
   /** Loads sherpa-onnx; tests pass a fake recognizer. */
   loadSherpa?: () => SherpaModule;
   /** The speech models to download; tests pass small ones. */
@@ -442,6 +451,12 @@ export class DesktopPetWorld implements World {
   private level = -100;
   private readonly chat = new ChatSockets();
   private readonly activity = new ActivityGroup();
+  /** The bugs of build and test runs on the screen (src/bugs.ts). */
+  private readonly bugs = new BugBoard();
+  /** Focus blocks and their breaks (src/focus.ts). */
+  private readonly focus = new FocusTimer({ lengths: () => this.cfg.focus, onChange: (state, change) => this.onFocus(state, change) });
+  /** GitHub, read while `github.enabled` is on (src/github.ts). */
+  private github: GithubWatch | null = null;
   /** What the status bubble shows. */
   private readonly status: StatusTracker;
   /** Computer use; its tools and its part of the environment prompt are there while `cua.enabled` is on. */
@@ -499,6 +514,7 @@ export class DesktopPetWorld implements World {
       text: () => this.ui,
       overlay: () => this.cfg.window.exportOverlay,
       speech: (text) => this.speechText.units(text, this.appLanguage),
+      bugs: { list: () => this.bugs.all, report: (body) => this.onBugReport(body) },
     });
   }
 
@@ -716,9 +732,13 @@ export class DesktopPetWorld implements World {
     await this.syncTypeKey();
     this.prefsKey = this.prefsSignature();
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
+    this.syncGithub();
   }
 
   async stop(): Promise<void> {
+    this.focus.dispose();
+    this.github?.stop();
+    this.github = null;
     this.voiceGeneration++;
     this.runningEngine = null;
     this.status.clear();
@@ -962,6 +982,9 @@ export class DesktopPetWorld implements World {
       status: this.status.status,
       statusBubble: this.cfg.statusBubble,
       saidBubbles: this.cfg.saidBubbles,
+      clipboardErrors: this.cfg.clipboardErrors,
+      focus: this.focus.state,
+      bugs: this.bugs.all,
       bot: this.botInfo(),
     };
   }
@@ -990,6 +1013,8 @@ export class DesktopPetWorld implements World {
   private prefsSignature(): string {
     const s = this.snapshot();
     delete s.status;
+    // bugs reach the page as their own orders
+    delete s.bugs;
     // a talk key that opens the microphone sends each change by itself (setMicHeld): the signature keeps only that it does
     if (this.micOnPress()) s.mic = 'press';
     return JSON.stringify(s);
@@ -1018,6 +1043,7 @@ export class DesktopPetWorld implements World {
     // the person changed what a quiet holds back: theirs wins
     if (this.quiet && (this.cfg.sound !== this.quiet.base.sound || this.cfg.roam !== this.quiet.base.roam)) this.endQuiet();
     this.server.syncOverlay();
+    this.syncGithub();
     const paused = this.opts.controls?.isPaused?.() ?? false;
     if (paused !== this.pausedShown) { this.pausedShown = paused; this.chat.broadcast({ t: 'paused', paused }); }
     const bot = this.botName();
@@ -1210,6 +1236,13 @@ export class DesktopPetWorld implements World {
         return;
       }
       case 'touch': return this.onTouch(msg);
+      case 'bug': return this.explainBug(String(msg.id));
+      case 'explain': return this.explainCopied(msg.text);
+      case 'focus': {
+        if (msg.action === 'start') this.focus.start();
+        else if (msg.action === 'stop') this.focus.stop();
+        return;
+      }
       case 'mic': {
         this.micState = { state: String(msg.state), detail: typeof msg.detail === 'string' ? msg.detail : null };
         // a closed microphone sends no more frames: the meter drops to silence
@@ -1412,6 +1445,77 @@ export class DesktopPetWorld implements World {
       x: typeof msg.x === 'number' ? msg.x : null,
       timer: setTimeout(() => this.flushTouch(), TOUCH_MERGE_MS),
     };
+  }
+
+  /**
+   * A build or test run's report: the page is sent every bug with the ids of those fixed, to be eaten, and the bot
+   * reads what changed with its next wake. False when `body` is not a report.
+   */
+  private onBugReport(body: unknown): boolean {
+    const r = readReport(body);
+    if (!r) return false;
+    this.takeReport(r);
+    return true;
+  }
+
+  /** A run's report, from buggie-watch or GitHub: the page is sent every bug with the ids fixed, and the bot is told what changed. */
+  private takeReport(r: BugReport): void {
+    const { added, fixed } = this.bugs.take(r);
+    this.server.sendPet({ t: 'bugs', bugs: this.bugs.all, fixed: fixed.map((b) => b.id) });
+    const t = this.t;
+    if (r.ok && fixed.length) {
+      void this.push('desktop-pet.build', 'desktop-pet.build', t.buildFixed(r.command, r.cwd, fixed.length), 'piggyback');
+    } else if (!r.ok && (added.length || fixed.length)) {
+      const shown = r.problems.slice(0, BUILD_PROBLEMS_SHOWN).map(problemLine);
+      void this.push('desktop-pet.build', 'desktop-pet.build', t.buildFailed(r.command, r.cwd, shown, r.problems.length - shown.length, fixed.length), 'piggyback');
+    }
+  }
+
+  /** A focus block or its break started or ended: the page shows it at once, the bot reads it with its next wake. */
+  private onFocus(state: FocusState | null, change: FocusChange): void {
+    this.server.broadcast({ t: 'prefs', focus: state });
+    const t = this.t, u = this.userName;
+    const text = change === 'start' ? t.focusStarted(u, state!.minutes) : change === 'break' ? t.focusBreak(u, state!.minutes) : change === 'done' ? t.focusDone(u) : t.focusStopped(u);
+    void this.push('desktop-pet.focus', 'desktop-pet.focus', text, 'piggyback');
+  }
+
+  /** Starts or stops reading GitHub as `github.enabled` says. */
+  private syncGithub(): void {
+    const on = this.cfg.github.enabled;
+    if (on && !this.github) {
+      this.github = new GithubWatch({
+        fetch: this.opts.fetchImpl ?? fetch,
+        token: () => this.opts.githubToken?.() ?? githubToken(),
+        repos: () => readRepos(this.cfg.github.repos),
+        onRun: (report) => this.takeReport(report),
+        onNotices: (notices) => this.onGithubNotices(notices),
+        warn: (message) => this.log?.warn(`GitHub 没能读取:${message}`),
+      });
+      this.github.start();
+    } else if (!on && this.github) {
+      this.github.stop();
+      this.github = null;
+    }
+  }
+
+  /** GitHub notifications: the bot is woken to pass them on. */
+  private onGithubNotices(notices: Notice[]): void {
+    const t = this.t;
+    void this.push('desktop-pet.github', 'desktop-pet.github', t.github(notices.map((n) => t.githubLine(n.repo, n.reason, n.type, n.title))), 'debounce');
+  }
+
+  /** The person clicked a bug: the bot is asked to explain it at once. */
+  private explainBug(id: string): void {
+    const found = this.bugs.find(id);
+    if (!found) return;
+    const { bug, tail } = found;
+    void this.push('desktop-pet.explain', 'desktop-pet.explain', this.t.explainBug(this.userName, bug.command, bug.cwd, problemLine(bug), tail), 'preempt');
+  }
+
+  /** The person accepted the offer to explain an error they copied. */
+  private explainCopied(text: unknown): void {
+    if (typeof text !== 'string' || !text.trim()) return;
+    void this.push('desktop-pet.explain', 'desktop-pet.explain', this.t.explainCopied(this.userName, text.trim().slice(0, CLIP_MAX)), 'preempt');
   }
 
   private flushTouch(): void {
@@ -2372,3 +2476,20 @@ export class DesktopPetWorld implements World {
 }
 
 export const modelsDirFor = (root: string) => join(root, DESKTOP_PET_ID);
+
+/**
+ * The GitHub token: GH_TOKEN or GITHUB_TOKEN, else what a signed-in gh command line gives (`gh auth token`), kept for
+ * TOKEN_KEEP_MS; null when there is none.
+ */
+let ghToken: { value: string | null; at: number } | null = null;
+const TOKEN_KEEP_MS = 10 * 60_000;
+export async function githubToken(): Promise<string | null> {
+  const env = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (env) return env;
+  if (ghToken && Date.now() - ghToken.at < TOKEN_KEEP_MS) return ghToken.value;
+  const value = await new Promise<string | null>((done) => {
+    execFile('gh', ['auth', 'token'], { timeout: 5000, windowsHide: true }, (err, out) => done(err ? null : String(out).trim() || null));
+  });
+  ghToken = { value, at: Date.now() };
+  return value;
+}
