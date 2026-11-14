@@ -17,8 +17,8 @@
     "ru": "Звёздочка"
   },
   "about": {
-    "zh": "一颗圆鼓鼓的五角星:角是圆的,脸在正中,两只圆眼睛、红脸蛋和一张小嘴,左右两个角当手,底下两条短腿;头顶旁边不时闪一下小星光",
-    "en": "a puffy five-pointed star with rounded points: a face in the middle with two round eyes, rosy cheeks and a small mouth, the side points for arms, and two short legs underneath; a little twinkle flashes now and then beside its top point"
+    "zh": "一颗圆鼓鼓的五角星:角是圆的,脸在正中,两只圆眼睛、红脸蛋和一张小嘴,左右两个角当手;它不走路,收起小腿飘在地面上方,移动时身后留下一串小星光",
+    "en": "a puffy five-pointed star with rounded points: a face in the middle with two round eyes, rosy cheeks and a small mouth, the side points for arms; it does not walk but floats over the floor with its legs tucked away, leaving a trail of little sparkles as it moves"
   },
   "author": "Buggie",
   "entry": "figure.js",
@@ -173,8 +173,8 @@
         ]
       },
       "about": {
-        "zh": "一只眼 ^",
-        "en": "one eye turns into ^"
+        "zh": "一只眼睛变成 ^,眼角迸出一把小星星",
+        "en": "one eye turns into ^ and a burst of little stars flies out of it"
       },
       "seconds": 0.9
     },
@@ -684,27 +684,50 @@
       "seconds": 3.4
     },
     {
-      "id": "hunt",
+      "id": "soar",
       "kind": "motion",
       "names": {
         "zh": [
-          "抓虫",
-          "吃虫"
+          "飞升",
+          "升空"
         ],
         "en": [
-          "chase-bug",
-          "eat-bug"
+          "fly-up",
+          "rise-up"
         ],
         "es-419": [
-          "cazar",
-          "comer-bug"
+          "volar",
+          "subir"
         ]
       },
       "about": {
-        "zh": "一只小虫子从地上爬出来,你追着它跑,抓到后一口吃掉;修好一个 bug 时很合适",
-        "en": "a little bug crawls out on the floor, you chase it and gobble it up; fitting when a bug has just been fixed"
+        "zh": "笔直向上飘升,身后留下一串星光,在高处停一下再慢慢落回来",
+        "en": "floats straight up leaving a trail of sparkles, hangs there a moment, then drifts back down"
       },
-      "seconds": 8
+      "seconds": 3.6
+    },
+    {
+      "id": "zap",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "发光",
+          "赶虫"
+        ],
+        "en": [
+          "shine",
+          "scare-bugs"
+        ],
+        "es-419": [
+          "brillar",
+          "espantar"
+        ]
+      },
+      "about": {
+        "zh": "举起两个角,从前面的角射出一道光;修好一个 bug 时很合适,屏幕上修好的虫子会被光赶跑或烧掉",
+        "en": "raises its side points and casts a light from its front point; fitting when a bug has just been fixed, the fixed bugs on the screen are chased off or burnt up by the lights"
+      },
+      "seconds": 1.2
     }
   ],
   "sounds": {},

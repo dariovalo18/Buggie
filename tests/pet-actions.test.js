@@ -24,20 +24,63 @@ describe('the words the model can use', () => {
     for (const pack of ['coo', 'whale', 'star']) {
       const words = (kind) => vocabOf(pack).filter((v) => v.kind === kind).map((v) => v.id).sort();
       expect(words('expression'), pack).toEqual([...KIT_EXPRESSIONS].sort());
-      // Buggie and the Little Star add the bug hunt (web/coo/figure.js, web/star/figure.js)
-      expect(words('motion'), pack).toEqual([...KIT_MOTIONS, ...(pack === 'whale' ? [] : ['hunt'])].sort());
+      // Buggie adds the bug hunt (web/coo/figure.js), the Little Star its zap and soar (web/star/figure.js)
+      expect(words('motion'), pack).toEqual([...KIT_MOTIONS, ...({ coo: ['hunt'], star: ['soar', 'zap'] }[pack] ?? [])].sort());
     }
   });
 
-  it('the Little Star draws every face of the kit in every colour, and walks, sits and is dragged on it', () => {
+  it('the Little Star sends stars out of the eye it winks, and soars straight up over sparkles and comes back down', () => {
+    const star = starFigure('gold'), drawn = [];
+    const draw = star.draw;
+    star.draw = (g, face, o) => { draw(g, face, o); drawn.push({ face: o.face, gesture: o.gesture?.kind, svg: g.innerHTML, top: star.extent[1], hit: star.hits[0][1] }); };
+    const pet = barePet(undefined, { figure: star, skin: null, words: { soar: { motion: { seconds: 3.4 } } } });
+    run(pet, 1);
+    const sparkles = (svg) => (svg.match(/rotate\(/g) ?? []).length;
+    const before = sparkles(drawn.at(-1).svg);
+    pet.setExpr('wink');
+    run(pet, .2);
+    expect(drawn.at(-1).face).toBe('wink');
+    expect(sparkles(drawn.at(-1).svg)).toBeGreaterThanOrEqual(before + 6);
+    run(pet, 2);
+    const ground = drawn.at(-1);
+    expect(pet.doWord('soar')).toBe(true);
+    run(pet, 1.5);
+    const up = drawn.at(-1);
+    expect(up.gesture).toBe('soar');
+    // risen about SOAR_PEAK: the box and the hit circle went up with it, sparkles left under it
+    expect(ground.hit - up.hit).toBeGreaterThan(180);
+    expect(ground.top - up.top).toBeGreaterThan(180);
+    expect(sparkles(up.svg)).toBeGreaterThan(sparkles(ground.svg) + 8);
+    run(pet, 2.5);
+    expect(Math.abs(drawn.at(-1).hit - ground.hit)).toBeLessThan(15);
+  });
+
+  it('the Little Star draws every face of the kit in every colour, floats with no legs, leaves sparkles behind as it moves and casts its light', () => {
     for (const scheme of SCHEME_IDS) {
       for (const [name, face] of Object.entries(FACES)) {
         const svg = starFrame(face.f(1.3, { drowse: .8, modeT: .7 }), { look: [4, -2], legs: STAND, low: 2, t: 1.3, blink: .2, eyeClose: .1, swing: 6, zmark: true }, scheme);
         expect(svg, `${scheme} ${name}`).not.toMatch(/NaN|undefined/);
       }
     }
-    const pet = barePet(undefined, { figure: starFigure('pink'), skin: null });
-    for (const w of ['walk', 'sit', 'dance', 'hunt']) { pet.doWord(w); run(pet, 2); }
+    const star = starFigure('pink'), drawn = [];
+    const figure = { draw: (g, face, o) => { star.draw(g, face, o); drawn.push({ mode: o.mode, gesture: o.gesture?.kind, svg: g.innerHTML }); }, anchors: star.anchors, extent: star.extent, hits: star.hits, colors: star.colors };
+    const pet = barePet(undefined, { figure, skin: null, words: { zap: { motion: { seconds: 1.1 } } } });
+    run(pet, .5);
+    // floating: no leg strokes as wide as the kit's legs, the star raised over its ground line
+    expect(drawn.at(-1).svg).not.toMatch(/stroke-width="(28|18)"/);
+    expect(drawn.at(-1).svg).toMatch(/translate\(0 -\d/);
+    const sparkles = (svg) => (svg.match(/rotate\(/g) ?? []).length;
+    const still = sparkles(drawn.at(-1).svg);
+    pet.walkTo(900, false);
+    run(pet, .5);
+    expect(drawn.at(-1).mode).toBe('walk');
+    expect(sparkles(drawn.at(-1).svg)).toBeGreaterThan(still + 3);
+    pet.walkTo(pet.pet.x, false);
+    run(pet, 2);
+    expect(pet.doWord('zap')).toBe(true);
+    run(pet, .6);
+    expect(drawn.at(-1).gesture).toBe('zap');
+    for (const w of ['sit', 'dance']) { pet.doWord(w); run(pet, 2); }
   });
 
   it('automatic thinking drops the thought trail only while the page shows the thought, and explicit thinking keeps the rings', () => {

@@ -5,7 +5,8 @@
  * Bugs: each problem of a failed build or test run (src/bugs.ts) is a pixel ladybug crawling on the floor, coming in
  * from the nearest edge and scurrying off when the body comes close. Clicking one asks the bot to explain it
  * (`{ t: 'bug', id }`). A fixed bug freezes; the body runs to each fixed one in turn, nearest first, and eats it. One
- * not reached within CHASE_SECONDS is eaten where it stands.
+ * not reached within CHASE_SECONDS is eaten where it stands. A body whose vocabulary has `zap` (the Little Star) goes
+ * to ZAP_RANGE short of it instead, does `zap` and casts three lights at it: hit, it runs off the screen or burns up.
  *
  * Offer: copied text that looks like an error (dev-errors.js) brings a small bubble over the body, once the body's
  * own bubble is free, with a button that sends the text to the bot (`{ t: 'explain', text }`) and one that drops it.
@@ -20,6 +21,8 @@ const SIZE = 26, SPEED = [14, 30];
 /** How near the body (past its half width) a live bug scurries off, and how near a fixed one is eaten. */
 const SHY = 30, BITE = 18;
 const CHASE_SECONDS = 4;
+/** How far from a fixed bug a body that zaps stops to cast, in pixels at body scale 1 (`bounds().S` .42). */
+const ZAP_RANGE = 150;
 /** How far in from its edge a bug comes before it starts to wander, as a share of the stage's width. */
 const COME_IN = [.12, .4];
 /** Seconds an offer stays up unanswered, and how long a copied error waits for the body's bubble to be free. */
@@ -98,12 +101,13 @@ export function createDevBugs(o) {
     bugs.set(p.id, bug);
   }
 
-  function eat(bug) {
+  /** A fixed bug is done with: eaten, burnt up, or run off the screen (`how`, the class its sprite leaves with). */
+  function eat(bug, how = 'eaten') {
     bugs.delete(bug.id);
-    bug.el.classList.add('eaten');
+    bug.el.classList.add(how);
     bug.el.disabled = true;
-    setTimeout(() => bug.el.remove(), 320);
-    o.sfx.pop?.();
+    setTimeout(() => bug.el.remove(), how === 'burnt' ? 1000 : 320);
+    if (how !== 'gone') o.sfx.pop?.();
     ate++;
     if (chase === bug) chase = null;
     if (![...bugs.values()].some((b) => b.fixed) && ate) {
@@ -121,7 +125,7 @@ export function createDevBugs(o) {
     const doomed = new Set(fixed);
     for (const bug of bugs.values()) {
       if (want.has(bug.id)) continue;
-      if (doomed.has(bug.id)) { bug.fixed = true; bug.el.classList.add('fixed'); bug.el.title = ''; }
+      if (doomed.has(bug.id)) { if (bug.fate) continue; bug.fixed = true; bug.el.classList.add('fixed'); bug.el.title = ''; }
       else { bugs.delete(bug.id); bug.el.remove(); }
     }
     for (const p of want.values()) if (!bugs.has(p.id)) spawn(p);
@@ -147,32 +151,92 @@ export function createDevBugs(o) {
     if (bug.x < margin || bug.x > W - margin) { bug.dir = bug.x < margin ? 1 : -1; bug.x = Math.max(margin, Math.min(W - margin, bug.x)); }
   }
 
+  /** A body with the word `zap` (the Little Star) shoots lights at fixed bugs from ZAP_RANGE away instead of eating them. */
+  const zapper = () => o.words().has('zap');
+  /** Lights in flight: { el, x0, y0, bug, age, life }. */
+  const lights = [];
+
   function hunt(l) {
     if (chase && !bugs.has(chase.id)) chase = null;
     if (!chase) {
-      const doomed = [...bugs.values()].filter((b) => b.fixed);
+      const doomed = [...bugs.values()].filter((b) => b.fixed && !b.zapped);
       if (!doomed.length || !l || l.busy || !o.free()) return;
       chase = doomed.reduce((a, b) => (Math.abs(b.x - l.x) < Math.abs(a.x - l.x) ? b : a));
       chase.since = T;
       // one fixed before it was all the way in is eaten where the body can reach
       chase.x = Math.max(sizeNow(), Math.min(o.bounds().W - sizeNow(), chase.x));
-      o.body()?.walk(chase.x, true, `bug-${chase.id}`);
+      const range = zapper() ? ZAP_RANGE * o.bounds().S / .42 : 0;
+      const side = l.x < chase.x ? -1 : 1, W = o.bounds().W;
+      const to = Math.max(0, Math.min(W, chase.x + side * range));
+      o.body()?.walk(to, !range, `bug-${chase.id}`);
+      chase.from = to;
       return;
     }
-    if (Math.abs(l.x - chase.x) < (l.box?.w ?? 100) / 4 + BITE || T - chase.since > CHASE_SECONDS) eat(chase);
+    const near = Math.abs(l.x - chase.from) < (l.box?.w ?? 100) / 4 + BITE;
+    if (!near && T - chase.since <= CHASE_SECONDS) return;
+    if (!zapper()) { eat(chase); return; }
+    zap(chase, l);
+    chase = null;
+  }
+
+  /** Casts lights at a fixed bug; the first to land sends it off the screen or burns it up. */
+  function zap(bug, l) {
+    bug.zapped = true;
+    o.body()?.do('zap');
+    const b = l.box, x0 = l.facing > 0 ? b.x + b.w * .85 : b.x + b.w * .15, y0 = b.y + b.h * .4;
+    for (let i = 0; i < 3; i++) {
+      const el = doc.createElement('div');
+      el.className = 'code-zap';
+      el.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0 -10L2.8 -2.8L10 0L2.8 2.8L0 10L-2.8 2.8L-10 0L-2.8 -2.8Z"/></svg>';
+      layer.append(el);
+      lights.push({ el, x0, y0, bug, age: -.55 - i * .12, life: .32, lift: rnd(30, 70) * (i % 2 ? 1 : -.4) });
+    }
+  }
+
+  function stepLights(dt) {
+    const { floorY } = o.bounds(), size = sizeNow();
+    for (let i = lights.length - 1; i >= 0; i--) {
+      const p = lights[i];
+      p.age += dt;
+      const k = Math.max(0, p.age) / p.life, x1 = p.bug.x, y1 = floorY - size / 2;
+      // an arc from the body's front point down to the bug
+      const x = p.x0 + (x1 - p.x0) * k, y = p.y0 + (y1 - p.y0) * k - p.lift * Math.sin(Math.PI * Math.min(1, k));
+      p.el.style.opacity = p.age < 0 ? '0' : '1';
+      p.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${(p.age * 720).toFixed(0)}deg)`;
+      if (k < 1) continue;
+      p.el.classList.add('hit');
+      setTimeout(() => p.el.remove(), 300);
+      lights.splice(i, 1);
+      const bug = p.bug;
+      if (!bugs.has(bug.id) || bug.fate) continue;
+      // some run for the nearest edge, the rest burn up where they stand
+      bug.fate = Math.random() < .5 ? 'flee' : 'burn';
+      if (bug.fate === 'burn') { eat(bug, 'burnt'); continue; }
+      bug.el.classList.remove('fixed');
+      bug.el.classList.add('fleeing');
+      bug.dir = bug.x < o.bounds().W / 2 ? -1 : 1;
+    }
+  }
+
+  function flee(bug, dt) {
+    bug.x += bug.dir * SPEED[1] * 7 * (sizeNow() / SIZE) * dt;
+    if (bug.x < -sizeNow() * 2 || bug.x > o.bounds().W + sizeNow() * 2) eat(bug, 'gone');
   }
 
   function step(dt) {
     T += dt;
     const { W, floorY } = o.bounds(), l = o.body()?.layout ?? null, size = sizeNow();
     for (const bug of bugs.values()) {
-      if (!bug.fixed) crawl(bug, dt, l, W);
+      if (bug.fate === 'flee') flee(bug, dt);
+      else if (!bug.fixed) crawl(bug, dt, l, W);
       const s = bug.el.style;
       s.width = s.height = `${size}px`;
       s.transform = `translate(${(bug.x - size / 2).toFixed(1)}px, ${(floorY - size).toFixed(1)}px) scaleX(${bug.dir})`;
     }
     hunt(l);
-    stepOffer(l);  }
+    stepLights(dt);
+    stepOffer(l);
+  }
 
   /* ---------- the offer ---------- */
 
