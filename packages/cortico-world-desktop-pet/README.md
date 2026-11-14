@@ -77,7 +77,9 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 - `own`:使用者自己的机器人,令牌存为部署的密钥 `DESKTOP_PET_TELEGRAM_TOKEN`(移除后是 `-`)。World 用 `getUpdates` 长轮询读它的私聊,不需要公网地址。连接时页面给一个 10 分钟有效的代码和 `t.me` 链接;发来这个代码的聊天记为 `telegram.chat` 和 `telegram.name`,此后只听这个聊天,别人收到 `telegram.strangers` 那句话。启动之前发来的消息不读。
 - `team`:公司在团队服务器上的机器人(`team-server/README.md` 的「Telegram」)。服务器把使用者的 Telegram 连到帐号上,消息作为只给这个帐号的 `telegram.message` 写进活动日志,`TeamClient` 读到后交给 World。
 
-使用者的消息作为 `desktop-pet.telegram`(preempt)送出;连接了聊天时给出 `telegram_send(text)`,经自己的机器人或团队服务器发回去。
+使用者的消息作为 `desktop-pet.telegram`(preempt)送出;`telegram_send(text)` 一直都在(工具表只在重建前缀时更新),连接了聊天时经自己的机器人或团队服务器发回去,没连接时失败并说明原因。
+
+使用者在 Telegram 上发过消息后 10 分钟内,`confirm`(电脑操作的许可、设置的同意)和 `pet_ask` 都改发到 Telegram,选项带编号。`confirm` 由下一条消息回答(编号、选项的字、或是/否),等 5 分钟;不是回答的消息算「否」,再照常送给机器人。`pet_ask` 的回答作为下一条 `desktop-pet.telegram` 到来。发不出去时回到气泡。
 
 ## 团队服务器
 

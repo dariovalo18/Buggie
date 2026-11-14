@@ -108,6 +108,31 @@ const CLIP_MAX = 8000;
 const CONFIRM_TIMEOUT_MS = 60_000;
 /** How long a confirmation waits in all, while the page has not shown it (lines ahead of it in the queue). */
 const CONFIRM_UNSHOWN_MS = 180_000;
+/** After a Telegram message, how long the person counts as talking from there (confirmations are asked there). */
+const TELEGRAM_ACTIVE_MS = 10 * 60_000;
+/** How long a confirmation asked on Telegram waits for the answer. */
+const TELEGRAM_CONFIRM_MS = 5 * 60_000;
+
+const YES_WORDS = new Set(['si', 'yes', 'y', 's', 'ok', 'dale', 'oui', 'ja', 'sim', 'da', 'да', '是', '好', 'はい', '네']);
+const NO_WORDS = new Set(['no', 'n', 'non', 'nein', 'nao', 'нет', '否', '不', 'いいえ', '아니요']);
+
+/**
+ * Reads a Telegram reply to a confirmation with `choices` (yes, [always,] no): a choice's number, the start
+ * of its words, or a plain yes or no. null when the message is something else.
+ */
+export function telegramAnswer(text: string, choices: readonly string[]): ConfirmResult | null {
+  const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[.!¡?¿,;:"'\s]+/gu, ' ').trim();
+  const said = norm(text);
+  if (!said) return null;
+  const results: ConfirmResult[] = choices.length === 3 ? ['yes', 'always', 'no'] : ['yes', 'no'];
+  const n = Number(said);
+  if (Number.isInteger(n) && n >= 1 && n <= choices.length) return results[n - 1]!;
+  const i = choices.findIndex((c) => norm(c) === said);
+  if (i >= 0) return results[i]!;
+  if (YES_WORDS.has(said)) return 'yes';
+  if (NO_WORDS.has(said)) return 'no';
+  return null;
+}
 /** History events read per chat page load; the page asks for the ones before by cursor. */
 const CHAT_PAGE_EVENTS = 300;
 /** A message from the chat page: text cut to this, up to IMAGES_MAX images of at most IMAGE_MAX_BYTES each, as the console World takes them. */
@@ -501,6 +526,10 @@ export class DesktopPetWorld implements World {
   private telegramKey = '';
   /** The company bot and this account's link to it, as the team server last told; null before a read. */
   private teamTelegram: { bot: { username: string } | null; link: { name: string; notify: string } | null } | null = null;
+  /** When the person last wrote on Telegram (ms); 0 until then. */
+  private telegramAt = 0;
+  /** A confirmation asked on Telegram, answered by the next message there. */
+  private telegramQuestion: { choices: string[]; resolve: (r: ConfirmResult) => void; timer: NodeJS.Timeout } | null = null;
   /** What the status bubble shows. */
   private readonly status: StatusTracker;
   /** Computer use; its tools and its part of the environment prompt are there while `cua.enabled` is on. */
@@ -787,6 +816,7 @@ export class DesktopPetWorld implements World {
     this.github = null;
     this.team.stop();
     this.ownBot.stop();
+    this.telegramQuestion?.resolve('unavailable');
     this.voiceGeneration++;
     this.runningEngine = null;
     this.status.clear();
@@ -1388,6 +1418,7 @@ export class DesktopPetWorld implements World {
    * is awaited CONFIRM_TIMEOUT_MS from when the page shows the bubble, which may queue it behind lines.
    */
   confirm(question: string, choices: [yes: string, no: string] | [yes: string, always: string, no: string]): Promise<ConfirmResult> {
+    if (this.telegramActive()) return this.confirmOnTelegram(question, choices);
     const id = nextId('k');
     if (this.petHidden || !this.server.sendPet({ t: 'confirm', id, question, options: choices })) return Promise.resolve('unavailable');
     return new Promise((resolve) => {
@@ -1614,8 +1645,58 @@ export class DesktopPetWorld implements World {
     return mode === 'own' ? this.ownBot.ready : mode === 'team' ? this.team.ready && !!this.teamTelegram?.link : false;
   }
 
-  /** The person wrote on Telegram: the bot is woken to answer there. */
+  /**
+   * The person is talking from Telegram: linked, and wrote there within TELEGRAM_ACTIVE_MS. Confirmations go
+   * there then, since nobody may be at the screen to see the bubble.
+   */
+  private telegramActive(): boolean {
+    return this.telegramReady() && Date.now() - this.telegramAt < TELEGRAM_ACTIVE_MS;
+  }
+
+  /**
+   * Asks a confirmation on Telegram: the question with its choices numbered, answered by the next message
+   * (a number, a choice's word, or yes/no). Waits TELEGRAM_CONFIRM_MS; a message that is no answer is a no,
+   * and goes on to the bot as what it says. When the question cannot be sent, the bubble asks instead.
+   */
+  private async confirmOnTelegram(question: string, choices: string[]): Promise<ConfirmResult> {
+    this.telegramQuestion?.resolve('dismissed');
+    const listed = choices.map((c, i) => `${i + 1}. ${c}`).join('\n');
+    const sent = await this.telegramDeliver(`${question}\n\n${listed}`);
+    if (!sent) {
+      this.telegramAt = 0;
+      return this.confirm(question, choices as [string, string]);
+    }
+    return new Promise((resolve) => {
+      const q = {
+        choices,
+        resolve: (r: ConfirmResult) => { clearTimeout(q.timer); if (this.telegramQuestion === q) this.telegramQuestion = null; resolve(r); },
+        timer: setTimeout(() => q.resolve('timeout'), TELEGRAM_CONFIRM_MS),
+      };
+      this.telegramQuestion = q;
+    });
+  }
+
+  /** Sends a line to the linked Telegram chat; false when it could not. */
+  private async telegramDeliver(text: string): Promise<boolean> {
+    try {
+      if (this.cfg.telegram.mode === 'own') await this.ownBot.send(text);
+      else await this.team.call('POST', this.team.orgPath('/telegram/send'), { text });
+      return true;
+    } catch (e) {
+      this.log?.warn(`Telegram 发送失败:${e instanceof TelegramError || e instanceof TeamError ? e.code : String(e)}`);
+      return false;
+    }
+  }
+
+  /** The person wrote on Telegram: the answer to a confirmation asked there, or the bot is woken to answer there. */
   private onTelegramMessage(text: string): void {
+    this.telegramAt = Date.now();
+    const q = this.telegramQuestion;
+    if (q) {
+      const answer = telegramAnswer(text, q.choices);
+      q.resolve(answer ?? 'no');
+      if (answer) return;
+    }
     void this.push('desktop-pet.telegram', 'desktop-pet.telegram', this.t.telegram(this.userName, text), 'preempt');
   }
 
@@ -2268,6 +2349,10 @@ export class DesktopPetWorld implements World {
     const allowOwn = args.allowOwnAnswer !== false;
     if (!question) return { text: this.t.askEmpty, failed: true };
     if (options.length === 0 && !allowOwn) return { text: this.t.askNoWay, failed: true };
+    // talking from Telegram: the question goes there, and the reply comes back as a [telegram] message
+    if (this.telegramActive() && await this.telegramDeliver(options.length ? `${question}\n\n${options.map((o, i) => `${i + 1}. ${o}`).join('\n')}` : question)) {
+      return { text: this.t.askTelegram(this.userName) };
+    }
     const id = nextId('a');
     if (!this.server.sendPet({ t: 'ask', id, question, options, own: allowOwn })) return this.notConnected('pet_ask');
     const replaced = this.ask?.question ?? null;

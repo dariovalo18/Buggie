@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHub } from '../../../team-server/hub.ts';
 import { DESKTOP_PET_DEFAULTS, NO_TOKEN } from '../src/config.ts';
-import { DesktopPetWorld } from '../src/world.ts';
+import { DesktopPetWorld, telegramAnswer } from '../src/world.ts';
 import { FakeHost } from './helpers/fake-host.ts';
 
 const cleanup: Array<() => Promise<unknown> | unknown> = [];
@@ -76,7 +76,7 @@ async function mounted(tgApi: string, team?: { url: string }) {
 describe('Telegram through the person\'s own bot', () => {
   it('checks the token, links the chat that sends the code, wakes the bot with its messages and answers only it', async () => {
     const tg = await fakeTelegram();
-    const { cfg, host, panel, secrets, tool, toolNames } = await mounted(tg.api);
+    const { cfg, world, host, panel, secrets, tool, toolNames } = await mounted(tg.api);
     expect((await panel('telegramToken', ['wrong'])).error).toBe('telegram_token_invalid');
     const state = await panel('telegramToken', ['T1']);
     expect(state).toMatchObject({ error: null, mode: 'own', own: { hasToken: true, bot: 'acme_bot', linked: null } });
@@ -101,10 +101,27 @@ describe('Telegram through the person\'s own bot', () => {
     expect(host.events.filter((e) => e.type === 'desktop-pet.telegram')).toHaveLength(1);
     expect(await tool('telegram_send')!.handler({ text: 'Two: PAY-1 and PAY-2.' }, {} as never)).toEqual({ text: 'sent' });
     expect(tg.sent.at(-1)).toEqual({ chat_id: 501, text: 'Two: PAY-1 and PAY-2.' });
+    // talking from Telegram: a confirmation goes there and the next message answers it, without waking the bot
+    const asked = world.confirm('May I use the computer?', ['Yes', 'Always', 'No']);
+    await expect.poll(() => tg.sent.at(-1)?.text).toBe('May I use the computer?\n\n1. Yes\n2. Always\n3. No');
+    tg.say(501, 'bruno_tg', '2');
+    expect(await asked).toBe('always');
+    // pet_ask goes there too, its answer coming back as a message
+    expect(await tool('pet_ask')!.handler({ question: 'Which project?', options: ['PAY', 'WEB'] }, {} as never)).toMatchObject({ text: expect.stringContaining('Telegram') });
+    expect(tg.sent.at(-1)?.text).toBe('Which project?\n\n1. PAY\n2. WEB');
+    expect(host.events.filter((e) => e.type === 'desktop-pet.telegram')).toHaveLength(1);
     await panel('telegramUnlink');
     expect(await tool('telegram_send')!.handler({ text: 'hi' }, {} as never)).toMatchObject({ failed: true });
     await panel('telegramToken', ['']);
     expect(secrets.telegram).toBe(NO_TOKEN);
+  });
+});
+
+describe('telegramAnswer', () => {
+  it('reads a number, a choice, or a plain yes or no', () => {
+    const c = ['Sí', 'Siempre', 'No'];
+    expect(['1', 'sí', 'Si!', 'dale', 'siempre', ' 3 ', 'NO', 'qué tickets hay?'].map((t) => telegramAnswer(t, c))).toEqual(['yes', 'yes', 'yes', 'yes', 'always', 'no', 'no', null]);
+    expect(telegramAnswer('3', ['Yes', 'No'])).toBeNull();
   });
 });
 
