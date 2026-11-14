@@ -233,6 +233,8 @@ const de: Translation<PetText> = {
     breakMinutes: { title: 'Pausendauer' },
     githubEnabled: { title: 'GitHub', description: 'Liest GitHub alle paar Minuten: Fehlgeschlagene Actions-Läufe der Repositorys unten werden zu Bugs auf dem Bildschirm, die gefressen werden, sobald sie bestehen, und Benachrichtigungen zu Pull Requests und Issues erreichen Buggie. Das Token kommt aus GH_TOKEN, GITHUB_TOKEN oder der angemeldeten gh-Befehlszeile; ohne Token werden nur öffentliche Repositorys gelesen, seltener.' },
     githubRepos: { title: 'Repositorys', description: 'owner/repo, mehrere durch Kommas getrennt.' },
+    teamEnabled: { title: 'Team-Server', description: 'Verbindet mit dem Team-Server: Tickets, die dir zugewiesen sind, neue Tickets deiner Arbeitsgruppen und Neuigkeiten zu deinen Tickets erreichen Buggie, und Buggie kann Tickets lesen, anlegen und ändern. Anmelden auf der Seite Team im Einstellungsfenster.' },
+    teamUrl: { title: 'Serveradresse', description: 'Die Adresse des Team-Servers, z. B. http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Selbsteinstellung', description: 'off: Buggie kann die Einstellungen nicht ändern und auch nicht zeitweise still sein. default: Figur, Outfit, Herumlaufen und Schnarchen ändert Buggie direkt; Größe, Blasengröße, Schriftgröße, Töne, Nachtmodus, Hover-Schaltflächen und dein Name warten auf deine Zustimmung. any: Alles ändert Buggie direkt. custom: wie auf der Seite „Gewohnheiten“ angehakt; Angehaktes ändert Buggie direkt, der Rest wartet auf deine Zustimmung.' },
     windowEnabled: { title: 'Haustier-Fenster beim Start öffnen' },
     scale: { title: 'Größe' },

@@ -260,6 +260,8 @@ export default {
     breakMinutes: { title: '休息时长' },
     githubEnabled: { title: 'GitHub', description: '每隔几分钟读取 GitHub：下面仓库里失败的 Actions 运行在屏幕上变成虫子，修好后被吃掉；你在拉取请求和议题上的通知会告诉 Buggie。令牌取自 GH_TOKEN、GITHUB_TOKEN 或已登录的 gh 命令行；没有令牌时只读公开仓库，间隔更长。' },
     githubRepos: { title: '仓库', description: 'owner/repo，多个用逗号分隔。' },
+    teamEnabled: { title: '团队服务器', description: '连接团队服务器:分配给你的工单、你工作组里的新工单和你工单的动态会告诉 Buggie,Buggie 也能查看、新建和修改工单。在设置窗口的「团队」页登录。' },
+    teamUrl: { title: '服务器地址', description: '团队服务器的地址,例如 http://127.0.0.1:8791。' },
     selfAdjust: { title: '自主配置权限', description: 'off 禁止：不能自行修改设置，也不能临时安静；default 默认：形象、配色、走动和打呼直接修改，大小、气泡尺寸、字体尺寸、音效、夜间模式、悬停按钮和称呼先征得你同意；any 任意：都直接修改；custom 自定义：按「习惯」页里的勾选，勾上的直接修改，其余先征得你同意。' },
     windowEnabled: { title: '启动时打开桌宠窗口' },
     scale: { title: '大小' },

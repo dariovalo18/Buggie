@@ -25,7 +25,8 @@
     "typecheck": "tsc --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json",
     "test:worlds": "vitest run --config vitest.worlds.config.ts",
-    "typecheck:worlds": "tsc -p tsconfig.worlds.json"
+    "typecheck:worlds": "tsc -p tsconfig.worlds.json",
+    "team-server": "node --disable-warning=ExperimentalWarning team-server/server.ts"
   },
   "dependencies": {
     "cortico-provider-coo": "workspace:*",

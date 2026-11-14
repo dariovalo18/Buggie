@@ -31,6 +31,7 @@ given memory or handed context:
 | Model provider | `packages/cortico-provider-coo/` | `provider-coo` |
 | Build, staging and packing | `scripts/`, `installer/`, `electron-builder.yml` | `scripts`, `installer` |
 | Telemetry service | `telemetry-server/` | `telemetry-server` |
+| Team server: accounts, orgs, sectors, projects, tickets | `team-server/` | `team-server` |
 | Cortico | `vendor/cortico` (submodule) | `vendor` for a submodule bump |
 
 The World and provider packages are Cortico extensions: their tools, events, config keys, types

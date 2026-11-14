@@ -158,6 +158,8 @@ export default {
 
   // a bug of a build or test run on the floor, and the offer to explain a copied error (dev-bugs.js)
   'bugs.label': 'Bug: {problem}. Haz clic para que te lo explique',
+  'bugs.choose': '"{problem}": ¿te lo explico o abro un ticket en el servidor del equipo?',
+  'bugs.ticket': 'Abrir ticket',
   'clip.offer': 'Esto parece un error. ¿Te lo explico?',
   'clip.explain': 'Explicar',
   'clip.dismiss': 'Ahora no',

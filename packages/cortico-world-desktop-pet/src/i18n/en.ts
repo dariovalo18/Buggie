@@ -263,6 +263,8 @@ const en: PetText = {
     breakMinutes: { title: 'Break length' },
     githubEnabled: { title: 'GitHub', description: 'Reads GitHub every few minutes: failing Actions runs of the repositories below become bugs on the screen, eaten once they pass, and your notifications on pull requests and issues reach Buggie. The token comes from GH_TOKEN, GITHUB_TOKEN or a signed-in gh command line; without one only public repositories are read, less often.' },
     githubRepos: { title: 'Repositories', description: 'owner/repo, several separated by commas.' },
+    teamEnabled: { title: 'Team server', description: 'Connects to the team server: tickets assigned to you, new tickets in your work groups and news on your tickets reach Buggie, and Buggie can read, open and change tickets. Sign in on the Team page of the settings window.' },
+    teamUrl: { title: 'Server address', description: 'The team server\'s address, e.g. http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Self-adjustment', description: 'off: Buggie cannot change settings or keep quiet for a while. default: figure, dress, walking and snoring change directly; size, bubble size, text size, sounds, night mode, hover buttons and what Buggie calls you wait for your consent. any: everything changes directly. custom: as ticked on the Habits page; ticked items change directly, the rest wait for your consent.' },
     windowEnabled: { title: 'Open the pet window at start' },
     scale: { title: 'Size' },

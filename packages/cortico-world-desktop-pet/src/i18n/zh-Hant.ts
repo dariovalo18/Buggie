@@ -233,6 +233,8 @@ const zhHant: Translation<PetText> = {
     breakMinutes: { title: '休息時長' },
     githubEnabled: { title: 'GitHub', description: '每隔幾分鐘讀取 GitHub：下面儲存庫裡失敗的 Actions 執行在螢幕上變成蟲子，修好後被吃掉；你在拉取請求和議題上的通知會告訴 Buggie。權杖取自 GH_TOKEN、GITHUB_TOKEN 或已登入的 gh 命令列；沒有權杖時只讀公開儲存庫，間隔更長。' },
     githubRepos: { title: '儲存庫', description: 'owner/repo，多個用逗號分隔。' },
+    teamEnabled: { title: '團隊伺服器', description: '連線團隊伺服器:指派給你的工單、你工作組裡的新工單和你工單的動態會告訴 Buggie,Buggie 也能查看、新建和修改工單。在設定視窗的「團隊」頁登入。' },
+    teamUrl: { title: '伺服器位址', description: '團隊伺服器的位址,例如 http://127.0.0.1:8791。' },
     selfAdjust: { title: '自主設定權限', description: 'off 禁止：不能自行修改設定，也不能臨時安靜；default 預設：形象、配色、走動和打呼直接修改，大小、氣泡尺寸、字體尺寸、音效、夜間模式、懸停按鈕和稱呼先徵得你同意；any 任意：都直接修改；custom 自訂：照「習慣」頁裡的勾選，勾上的直接修改，其餘先徵得你同意。' },
     windowEnabled: { title: '啟動時開啟桌寵視窗' },
     scale: { title: '大小' },

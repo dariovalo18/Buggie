@@ -233,6 +233,8 @@ const fr: Translation<PetText> = {
     breakMinutes: { title: 'Durée de la pause' },
     githubEnabled: { title: 'GitHub', description: "Lit GitHub toutes les quelques minutes : les exécutions Actions en échec des dépôts ci-dessous deviennent des bugs à l'écran, mangés une fois réparés, et vos notifications sur les pull requests et les issues parviennent à Buggie. Le jeton vient de GH_TOKEN, GITHUB_TOKEN ou de la ligne de commande gh connectée ; sans jeton, seuls les dépôts publics sont lus, moins souvent." },
     githubRepos: { title: 'Dépôts', description: 'owner/repo, plusieurs séparés par des virgules.' },
+    teamEnabled: { title: 'Serveur d\'équipe', description: 'Se connecte au serveur d\'équipe : les tickets qui vous sont attribués, les nouveaux tickets de vos groupes de travail et les nouvelles de vos tickets parviennent à Buggie, qui peut lire, ouvrir et modifier des tickets. Connectez-vous sur la page Équipe de la fenêtre des réglages.' },
+    teamUrl: { title: 'Adresse du serveur', description: 'L\'adresse du serveur d\'équipe, par exemple http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Autoréglage', description: "off : aucun changement de réglage ni mise au calme pour un moment à l'initiative de Buggie. default : personnage, tenue, déplacements et ronflements changent directement ; taille, taille des bulles, taille du texte, sons, mode nuit, boutons au survol et la façon de vous appeler attendent votre accord. any : tout change directement. custom : selon les cases cochées sur la page Habitudes ; ce qui est coché change directement, le reste attend votre accord." },
     windowEnabled: { title: 'Ouvrir la fenêtre du compagnon au démarrage' },
     scale: { title: 'Taille' },

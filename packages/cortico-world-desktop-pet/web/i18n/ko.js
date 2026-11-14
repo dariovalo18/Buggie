@@ -158,6 +158,8 @@ export default {
 
   // a bug of a build or test run on the floor, and the offer to explain a copied error (dev-bugs.js)
   'bugs.label': '버그: {problem}. 클릭하면 설명해요',
+  'bugs.choose': '"{problem}": 설명할까요, 아니면 팀 서버에 티켓을 만들까요?',
+  'bugs.ticket': '티켓 만들기',
   'clip.offer': '오류 같아요. 설명해 줄까요?',
   'clip.explain': '설명해 줘',
   'clip.dismiss': '나중에',

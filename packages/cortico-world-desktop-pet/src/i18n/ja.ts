@@ -233,6 +233,8 @@ const ja: Translation<PetText> = {
     breakMinutes: { title: '休憩時間' },
     githubEnabled: { title: 'GitHub', description: '数分ごとに GitHub を読み取ります。下のリポジトリで失敗した Actions の実行は画面上のバグになり、通るようになると食べられます。プルリクエストと Issue の通知は Buggie に届きます。トークンは GH_TOKEN、GITHUB_TOKEN、またはログイン済みの gh コマンドから取ります。トークンがないときは公開リポジトリだけを、より長い間隔で読みます。' },
     githubRepos: { title: 'リポジトリ', description: 'owner/repo。複数はカンマで区切ります。' },
+    teamEnabled: { title: 'チームサーバー', description: 'チームサーバーに接続します。あなたに割り当てられたチケット、ワークグループの新しいチケット、あなたのチケットの動きが Buggie に届き、Buggie はチケットを読んだり作ったり変更したりできます。設定ウィンドウの「チーム」ページでサインインします。' },
+    teamUrl: { title: 'サーバーのアドレス', description: 'チームサーバーのアドレス。例: http://127.0.0.1:8791' },
     selfAdjust: { title: 'Buggie が設定する権限', description: 'off 禁止：Buggie は設定を変えられず、一時的に静かにすることもできません。default 標準：アバター、着せ替え、歩き回り、いびきは直接変え、サイズ、吹き出しのサイズ、文字サイズ、サウンド、ナイトモード、ホバーボタン、呼び名は先にあなたの同意を得ます。any すべて：どれも直接変えます。custom カスタム：「ふるまい」ページのチェックどおりで、チェックした項目は直接変え、ほかは先に同意を得ます。' },
     windowEnabled: { title: '起動時にペットのウィンドウを開く' },
     scale: { title: 'サイズ' },

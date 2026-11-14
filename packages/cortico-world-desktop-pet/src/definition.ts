@@ -9,12 +9,13 @@ import type { ModelLanguage } from './model-text.ts';
 import type { Answer } from './cua/engine-ipc.ts';
 import { CUA_OFF_TOOL_DECLS, CUA_TOOL_DECLS } from './cua/tools.ts';
 import { petToolDecls } from './tools.ts';
+import { TEAM_TOOL_DECLS } from './team-tools.ts';
 import { SELF_TYPE } from './chat.ts';
 import { petText } from './i18n/index.ts';
 
 /** Every tool the World can give (the computer-use ones while computer use is on, the way to its switch while it is off) and every event it pushes. */
 const DESCRIBE: WorldDescribe = {
-  tools: describeTools([...petToolDecls(), ...CUA_OFF_TOOL_DECLS, ...CUA_TOOL_DECLS], {
+  tools: describeTools([...petToolDecls(), ...TEAM_TOOL_DECLS, ...CUA_OFF_TOOL_DECLS, ...CUA_TOOL_DECLS], {
     pet_say: { zh: '在桌宠头顶的气泡里说话,可在话里穿插表情与动作。', en: 'Speaks in a bubble above the pet, with expressions and motions in between.' },
     pet_ask: { zh: '弹出带至多 3 个选项的提问气泡,回答之后作为事件送回。', en: 'Asks a question in a bubble with up to 3 options; the answer comes back later as an event.' },
     pet_move_to: { zh: '沿屏幕底边走到或跑到某个位置,或去形象包自带的目标。', en: "Walks or runs along the bottom edge of the screen to a position, or goes to one of the figure pack's own targets." },
@@ -22,6 +23,12 @@ const DESCRIBE: WorldDescribe = {
     pet_quiet: { zh: '安静一段时间:关掉音效、停止走动,到时恢复。', en: 'Keeps quiet for a while: sound effects off and standing still until the time is up.' },
     pet_act: { zh: '不说话,播放一串表情或动作。', en: 'Plays a sequence of expressions or motions without speaking.' },
     pet_see_self: { zh: '取一张桌宠身体此刻在屏幕上的图,不含气泡和桌面。', en: "Takes a picture of the pet's body as it is on screen right now, without bubbles or the desktop." },
+    team_info: { zh: '读取团队服务器:登录的帐号、组织、成员、工作组和项目。', en: 'Reads the team server: the account signed in, the org, its members, work groups and projects.' },
+    ticket_list: { zh: '列出团队服务器上的工单,可按项目、工作组、状态、负责人和文字筛选。', en: 'Lists tickets on the team server, by project, work group, status, assignee and text.' },
+    ticket_get: { zh: '读取一张工单,含正文、来源和评论。', en: 'Reads one ticket with its body, source and comments.' },
+    ticket_create: { zh: '在团队服务器的某个项目里新建工单。', en: 'Opens a ticket in a project on the team server.' },
+    ticket_update: { zh: '修改工单的状态、负责人、工作组、优先级、标题或正文。', en: "Changes a ticket's status, assignee, work group, priority, title or body." },
+    ticket_comment: { zh: '在工单下评论。', en: 'Comments on a ticket.' },
     pet_cua_open_settings: { zh: '电脑操作关着时,把设置窗口打开到它的开关,附风险说明。', en: 'While computer use is off, opens the settings window at its switch, with what it risks.' },
     pet_cua_screenshot: { zh: '截取一块显示器,附鼠标位置与前台窗口标题。', en: 'Captures one display, with the pointer position and the foreground window title.' },
     pet_cua_zoom: { zh: '从屏幕重新截取截图里的一块,读看不清的小字。', en: 'Captures a region of the screenshot again from the screen, for small text.' },
@@ -83,6 +90,16 @@ const DESCRIBE: WorldDescribe = {
       trigger: 'debounce',
     },
     {
+      type: 'desktop-pet.team',
+      description: { zh: '团队服务器上和使用者有关的新动态:分配给对方的工单、对方工作组里的新工单、对方工单的修改和评论、对方被加进工作组或项目。', en: 'News on the team server about the person: a ticket assigned to them, a new ticket in their work group, a change or comment on their tickets, their addition to a work group or project.' },
+      trigger: 'debounce',
+    },
+    {
+      type: 'desktop-pet.ticket',
+      description: { zh: '使用者想为屏幕上的一只虫子在团队服务器上开工单。', en: 'The person wants a ticket on the team server for a bug on the screen.' },
+      trigger: 'preempt',
+    },
+    {
       type: SELF_TYPE,
       description: { zh: '桌宠自己说的话与做的事,只给对话页显示,不送给 bot。', en: 'What the pet said and did, kept for the chat page and never delivered to the bot.' },
     },
@@ -137,6 +154,8 @@ export function desktopPetDefinition(assembly: DesktopPetAssembly = {}): WorldDe
         modelsDir: () => modelsDirFor(modelsRoot()),
         asrApiKey: () => ctx.secret(DESKTOP_PET_SECRETS.asrApiKey),
         storeAsrApiKey: (key) => ctx.storeSecret(DESKTOP_PET_SECRETS.asrApiKey, key),
+        teamToken: () => ctx.secret(DESKTOP_PET_SECRETS.teamToken),
+        storeTeamToken: (token) => ctx.storeSecret(DESKTOP_PET_SECRETS.teamToken, token),
         botName: () => assembly.botName?.() ?? ctx.botName,
         controls: assembly.controls,
         packRoots: () => [join(ctx.dataDir, 'figures'), ...assembly.packRoots?.() ?? []],

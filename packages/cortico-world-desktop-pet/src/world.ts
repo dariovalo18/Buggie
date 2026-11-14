@@ -30,7 +30,7 @@ import { nowIso, shortTime } from 'cortico/core/util.ts';
 import type { Language } from 'cortico/core/language.ts';
 import type { DeepPartial } from 'cortico/world.ts';
 import {
-  DESKTOP_PET_ID, MAX_HOVER_BUTTONS, MAX_LOOK_NAME, MAX_SAVED_LOOKS, PET_ACTIONS, SELF_KEYS, THRESHOLD_DB_MAX, THRESHOLD_DB_MIN, TOUCH_KINDS, USER_MAX, asrEngineFor,
+  DESKTOP_PET_ID, MAX_HOVER_BUTTONS, NO_TOKEN, MAX_LOOK_NAME, MAX_SAVED_LOOKS, PET_ACTIONS, SELF_KEYS, THRESHOLD_DB_MAX, THRESHOLD_DB_MIN, TOUCH_KINDS, USER_MAX, asrEngineFor,
   desktopPetConfigGroups, directSettings, hoverButtonList, scaleOf, selfAdjustMode, speechFor, touchWakes,
   type AsrEngine, type DesktopPetConfigSection, type MicMode, type PetSkin, type PetTheme, type SavedLook, type RoamMode, type SelfKey,
 } from './config.ts';
@@ -62,6 +62,8 @@ import { MODEL_TEXT, type ModelLanguage, type ModelText, type NoPortrait } from 
 import { BugBoard, problemLine, readReport, type BugReport } from './bugs.ts';
 import { FocusTimer, type FocusChange, type FocusState } from './focus.ts';
 import { GithubWatch, readRepos, type Notice } from './github.ts';
+import { TeamClient, TeamError, type OrgView, type TeamNotice } from './team.ts';
+import { TEAM_TOOL_DECLS, teamHandlers } from './team-tools.ts';
 
 /** The console panels, titled in `language`. */
 function desktopPetPanelDecls(language: Language = 'zh'): WorldPanelDecl[] {
@@ -246,6 +248,9 @@ export interface DesktopPetWorldOptions {
   /** The transcription service's API Key, read at each request, and where the voice panel saves a new one; absent, there is none. */
   asrApiKey?: () => string;
   storeAsrApiKey?: (key: string) => void;
+  /** The team server's sign-in token, read at each request, and where a new one is saved; absent, there is none. */
+  teamToken?: () => string;
+  storeTeamToken?: (token: string) => void;
   /** The bot's name for the menu header, the chat page and computer use's question; read at each use. */
   botName?: () => string;
   controls?: PetBotControls;
@@ -457,6 +462,20 @@ export class DesktopPetWorld implements World {
   private readonly focus = new FocusTimer({ lengths: () => this.cfg.focus, onChange: (state, change) => this.onFocus(state, change) });
   /** GitHub, read while `github.enabled` is on (src/github.ts). */
   private github: GithubWatch | null = null;
+  /** The team server, read while `team.enabled` is on and the person is signed in (src/team.ts). */
+  private readonly team = new TeamClient({
+    fetch: (...a) => (this.opts.fetchImpl ?? fetch)(...a),
+    enabled: () => this.cfg.team.enabled,
+    url: () => this.cfg.team.url,
+    token: () => { const t = this.opts.teamToken?.() ?? ''; return t && t !== NO_TOKEN ? t : null; },
+    storeToken: (t) => this.opts.storeTeamToken?.(t ?? NO_TOKEN),
+    org: () => this.cfg.team.org,
+    setOrg: (org) => this.opts.persist({ team: { org } }),
+    onNotices: (notices) => this.onTeamNotices(notices),
+    warn: (message) => this.log?.warn(`团队服务器没能读取:${message}`),
+  });
+  /** The team settings the client last started from; a change restarts it. */
+  private teamKey = '';
   /** What the status bubble shows. */
   private readonly status: StatusTracker;
   /** Computer use; its tools and its part of the environment prompt are there while `cua.enabled` is on. */
@@ -733,12 +752,14 @@ export class DesktopPetWorld implements World {
     this.prefsKey = this.prefsSignature();
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
     this.syncGithub();
+    this.syncTeam();
   }
 
   async stop(): Promise<void> {
     this.focus.dispose();
     this.github?.stop();
     this.github = null;
+    this.team.stop();
     this.voiceGeneration++;
     this.runningEngine = null;
     this.status.clear();
@@ -983,6 +1004,8 @@ export class DesktopPetWorld implements World {
       statusBubble: this.cfg.statusBubble,
       saidBubbles: this.cfg.saidBubbles,
       clipboardErrors: this.cfg.clipboardErrors,
+      /** Signed in to the team server with an org: a bug's click offers a ticket too. */
+      team: this.team.ready,
       focus: this.focus.state,
       bugs: this.bugs.all,
       bot: this.botInfo(),
@@ -1044,6 +1067,7 @@ export class DesktopPetWorld implements World {
     if (this.quiet && (this.cfg.sound !== this.quiet.base.sound || this.cfg.roam !== this.quiet.base.roam)) this.endQuiet();
     this.server.syncOverlay();
     this.syncGithub();
+    this.syncTeam();
     const paused = this.opts.controls?.isPaused?.() ?? false;
     if (paused !== this.pausedShown) { this.pausedShown = paused; this.chat.broadcast({ t: 'paused', paused }); }
     const bot = this.botName();
@@ -1237,6 +1261,7 @@ export class DesktopPetWorld implements World {
       }
       case 'touch': return this.onTouch(msg);
       case 'bug': return this.explainBug(String(msg.id));
+      case 'ticket': return this.ticketForBug(String(msg.id));
       case 'explain': return this.explainCopied(msg.text);
       case 'focus': {
         if (msg.action === 'start') this.focus.start();
@@ -1510,6 +1535,54 @@ export class DesktopPetWorld implements World {
     if (!found) return;
     const { bug, tail } = found;
     void this.push('desktop-pet.explain', 'desktop-pet.explain', this.t.explainBug(this.userName, bug.command, bug.cwd, problemLine(bug), tail), 'preempt');
+  }
+
+  /** The person asked for a ticket for a bug: the bot is woken to open it. */
+  private ticketForBug(id: string): void {
+    const found = this.bugs.find(id);
+    if (!found || !this.team.ready) return;
+    const { bug, tail } = found;
+    void this.push('desktop-pet.ticket', 'desktop-pet.ticket', this.t.ticketBug(this.userName, bug.command, bug.cwd, problemLine(bug), tail), 'preempt');
+  }
+
+  /** Restarts the team client when its settings change. */
+  private syncTeam(): void {
+    const { enabled, url, org } = this.cfg.team;
+    const key = JSON.stringify([enabled, url, org]);
+    if (key === this.teamKey) return;
+    this.teamKey = key;
+    this.team.restart();
+  }
+
+  /** News on the team server about the person: the bot is woken to pass it on. */
+  private onTeamNotices(notices: TeamNotice[]): void {
+    const t = this.t;
+    void this.push('desktop-pet.team', 'desktop-pet.team', t.team(notices.map((n) => t.teamLine(n))), 'debounce');
+  }
+
+  /** What the settings window's Team page shows. */
+  private teamState(): Record<string, unknown> {
+    return {
+      enabled: this.cfg.team.enabled,
+      url: this.cfg.team.url,
+      org: this.cfg.team.org,
+      signedIn: this.team.user !== null,
+      user: this.team.user,
+      orgs: this.team.orgs,
+      view: this.team.view,
+      problem: this.team.problem,
+    };
+  }
+
+  /** A Team page call: the client's work, then the state read again; a failure is the server's error code. */
+  private async teamCall(f: () => Promise<unknown>): Promise<Record<string, unknown>> {
+    try {
+      await f();
+      await this.team.refresh().catch(() => {});
+      return { ...this.teamState(), error: null };
+    } catch (e) {
+      return { ...this.teamState(), error: e instanceof TeamError ? e.code : String(e) };
+    }
   }
 
   /** The person accepted the offer to explain an error they copied. */
@@ -2018,6 +2091,10 @@ export class DesktopPetWorld implements World {
       pet_cua_open_settings: async () => this.openCuaSettings(),
     };
     const own = petToolDecls(this.appLanguage).map((decl) => ({ ...decl, handler: handlers[decl.name], ...(decl.name === 'pet_move_to' ? { interruptible: true } : {}) }));
+    if (this.team.ready) {
+      const team = teamHandlers(this.team);
+      own.push(...TEAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: team[decl.name]! })));
+    }
     if (this.cuaOn) return [...own, ...this.cua.tools()];
     return this.cuaCanOpen ? [...own, ...CUA_OFF_TOOL_DECLS.map((decl) => ({ ...decl, handler: handlers[decl.name] }))] : own;
   }
@@ -2352,6 +2429,54 @@ export class DesktopPetWorld implements World {
           // the talk key's trigger depends on the typing key
           await this.syncHotkey();
           return this.petState();
+        }
+        // the Team page of the settings window (console/features/team/)
+        case 'teamState': return this.teamState();
+        case 'teamSetup': {
+          const raw = args[0] && typeof args[0] === 'object' ? args[0] as Record<string, unknown> : {};
+          const team: { enabled?: boolean; url?: string } = {};
+          if (typeof raw.enabled === 'boolean') team.enabled = raw.enabled;
+          if (typeof raw.url === 'string') team.url = raw.url.trim();
+          this.opts.persist({ team });
+          this.syncTeam();
+          return this.teamCall(async () => {});
+        }
+        case 'teamSignIn': {
+          const raw = args[0] && typeof args[0] === 'object' ? args[0] as Record<string, unknown> : {};
+          return this.teamCall(async () => {
+            if (!this.cfg.team.enabled) this.opts.persist({ team: { enabled: true } });
+            await this.team.signIn({ username: String(raw.username ?? ''), password: String(raw.password ?? ''), name: typeof raw.name === 'string' ? raw.name : undefined, register: raw.register === true });
+            this.syncTeam();
+          });
+        }
+        case 'teamSignOut': return this.teamCall(() => this.team.signOut());
+        case 'teamUseOrg': {
+          const id = typeof args[0] === 'number' ? args[0] : null;
+          return this.teamCall(async () => { this.team.useOrg(id); this.syncTeam(); });
+        }
+        case 'teamCreateOrg': case 'teamJoinOrg': {
+          const body = method === 'teamCreateOrg' ? { name: args[0] } : { invite: args[0] };
+          return this.teamCall(async () => {
+            const view = await this.team.call<OrgView>('POST', method === 'teamCreateOrg' ? '/v1/orgs' : '/v1/orgs/join', body);
+            this.team.useOrg(view.org.id);
+            this.syncTeam();
+          });
+        }
+        // the org's administration (members, sectors, projects, the invite code), under the org's path
+        case 'teamOrg': {
+          const [verb, rest, body] = args;
+          if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(verb)) || typeof rest !== 'string' || !/^\/(invite|members|sectors|projects)(\/|$)/.test(rest) || rest.split('/').includes('..')) {
+            throw new Error(this.ui.console.unknownMethod(`pet.teamOrg ${String(verb)} ${String(rest)}`));
+          }
+          return this.teamCall(async () => this.team.took(await this.team.call<OrgView>(String(verb), this.team.orgPath(rest), body ?? undefined)));
+        }
+        case 'teamTickets': {
+          const query = typeof args[0] === 'string' ? args[0] : '';
+          try {
+            return await this.team.call('GET', this.team.orgPath(`/tickets${query ? `?${query}` : ''}`));
+          } catch (e) {
+            return { tickets: [], error: e instanceof TeamError ? e.code : String(e) };
+          }
         }
         case 'guide': {
           if (!this.opts.controls?.guide) throw new Error(this.ui.console.noGuide);

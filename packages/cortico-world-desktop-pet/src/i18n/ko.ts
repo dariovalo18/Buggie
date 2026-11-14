@@ -233,6 +233,8 @@ const ko: Translation<PetText> = {
     breakMinutes: { title: '휴식 시간' },
     githubEnabled: { title: 'GitHub', description: '몇 분마다 GitHub를 읽습니다. 아래 저장소에서 실패한 Actions 실행은 화면의 버그가 되고, 통과하면 먹힙니다. 풀 리퀘스트와 이슈 알림은 Buggie에게 전달됩니다. 토큰은 GH_TOKEN, GITHUB_TOKEN 또는 로그인된 gh 명령줄에서 가져옵니다. 토큰이 없으면 공개 저장소만 더 긴 간격으로 읽습니다.' },
     githubRepos: { title: '저장소', description: 'owner/repo, 여러 개는 쉼표로 구분합니다.' },
+    teamEnabled: { title: '팀 서버', description: '팀 서버에 연결합니다. 나에게 배정된 티켓, 내 작업 그룹의 새 티켓, 내 티켓의 소식이 Buggie에게 전달되고, Buggie는 티켓을 읽고 만들고 바꿀 수 있습니다. 설정 창의 \'팀\' 페이지에서 로그인합니다.' },
+    teamUrl: { title: '서버 주소', description: '팀 서버 주소입니다. 예: http://127.0.0.1:8791' },
     selfAdjust: { title: 'Buggie가 설정하는 권한', description: 'off 금지: Buggie가 설정을 바꿀 수 없고 잠시 조용히 하기도 쓸 수 없습니다. default 기본: 외형, 꾸미기, 걷기, 코골이는 직접 바꾸고, 크기, 말풍선 크기, 글자 크기, 효과음, 야간 모드, 호버 버튼, 부를 이름은 먼저 동의를 구합니다. any 모두: 전부 직접 바꿉니다. custom 사용자 지정: 「습관」 페이지에서 체크한 항목은 직접 바꾸고, 나머지는 먼저 동의를 구합니다.' },
     windowEnabled: { title: '시작할 때 펫 창 열기' },
     scale: { title: '크기' },

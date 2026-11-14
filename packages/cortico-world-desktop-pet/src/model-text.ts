@@ -10,6 +10,8 @@
  */
 import type { SelfKey } from './config.ts';
 
+import type { TeamNotice } from './team.ts';
+
 export type ModelLanguage = 'zh' | 'en';
 
 interface SayReceipt {
@@ -99,6 +101,18 @@ const zh = {
   github: (lines: string[]) => `[github] 新通知:\n${lines.join('\n')}`,
   githubLine: (repo: string, reason: string, kind: 'PullRequest' | 'Issue' | string, title: string) =>
     `- ${repo} ${kind === 'Issue' ? '议题' : '拉取请求'}「${title}」:${GITHUB_REASONS_ZH[reason] ?? reason}`,
+  /** Team server notices (src/team.ts), one line each. */
+  team: (lines: string[]) => `[team] 团队服务器上有新动态:\n${lines.join('\n')}`,
+  teamLine: (n: TeamNotice) => n.kind === 'added'
+    ? `- ${n.actor}把你加进了${n.to === 'sector' ? '工作组' : '项目'}「${n.name}」`
+    : `- ${n.ticket.ref}「${n.ticket.title}」(${n.ticket.status},优先级 ${n.ticket.priority}):` + (
+      n.kind === 'assigned' ? `${n.actor}把它分配给了你`
+      : n.kind === 'sector' ? `${n.actor}在你的工作组「${n.ticket.sector}」里新建了它,还没有人负责`
+      : n.kind === 'changed' ? `${n.actor}修改了 ${n.fields.join('、')}`
+      : n.kind === 'comment' ? `${n.actor}评论:${n.excerpt}` : ''),
+  ticketBug: (user: string, command: string, cwd: string, problem: string, tail: string) =>
+    `[ticket] ${user}想为屏幕上的这只虫子在团队服务器上开一个工单。来自 ${code(command)}(在 ${cwd}):\n${problem}` +
+    (tail ? `\n输出的最后几行:\n${fence(tail)}` : ''),
 
   figureFailed: (name: string, reason: string, body: string, note: string) => `[figure] ${name}没能显示出来(${reason}),你现在是${body}。${note ? `\n${note}` : ''}`,
   reasonUnknown: '原因不明',
@@ -259,6 +273,17 @@ const en: typeof zh = {
   focusStopped: (user) => `[focus] ${user} ended the focus block early.`,
   github: (lines) => `[github] New notifications:\n${lines.join('\n')}`,
   githubLine: (repo, reason, kind, title) => `- ${repo} ${kind === 'Issue' ? 'issue' : 'pull request'} "${title}": ${GITHUB_REASONS_EN[reason] ?? reason}`,
+  team: (lines) => `[team] News on the team server:\n${lines.join('\n')}`,
+  teamLine: (n) => n.kind === 'added'
+    ? `- ${n.actor} added you to the ${n.to === 'sector' ? 'work group' : 'project'} "${n.name}"`
+    : `- ${n.ticket.ref} "${n.ticket.title}" (${n.ticket.status}, ${n.ticket.priority} priority): ` + (
+      n.kind === 'assigned' ? `${n.actor} assigned it to you`
+      : n.kind === 'sector' ? `${n.actor} opened it in your work group "${n.ticket.sector}", nobody has it yet`
+      : n.kind === 'changed' ? `${n.actor} changed ${n.fields.join(', ')}`
+      : n.kind === 'comment' ? `${n.actor} commented: ${n.excerpt}` : ''),
+  ticketBug: (user, command, cwd, problem, tail) =>
+    `[ticket] ${user} wants a ticket on the team server for this bug on the screen. From ${code(command)} (in ${cwd}):\n${problem}` +
+    (tail ? `\nThe end of the output:\n${fence(tail)}` : ''),
 
   figureFailed: (name, reason, body, note) => `[figure] ${name} could not be shown (${reason}); you are now ${body}.${note ? `\n${note}` : ''}`,
   reasonUnknown: 'reason unknown',

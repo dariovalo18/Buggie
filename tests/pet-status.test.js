@@ -711,6 +711,21 @@ describe('bugs of build and test runs', () => {
     expect(p.sockets[0].sent.at(-1)).toEqual({ t: 'bug', id: 'b1' });
   });
 
+  it('while the team server is connected, a click asks between explaining the bug and a ticket for it', async () => {
+    const p = await connected();
+    p.onOrder({ t: 'prefs', team: true });
+    p.onOrder({ t: 'bugs', bugs: [problem], fixed: [] });
+    const sent = () => p.sockets[0].sent.filter((m) => m.t === 'bug' || m.t === 'ticket');
+    p.doc.querySelector('.code-bug').click();
+    expect(sent()).toEqual([]);
+    const offer = p.doc.querySelector('.bubble.offer');
+    expect(offer.hidden).toBe(false);
+    const ticket = [...offer.querySelectorAll('button')].find((b) => b.textContent === t('bugs.ticket'));
+    ticket.click();
+    expect(sent()).toEqual([{ t: 'ticket', id: 'b1' }]);
+    expect(offer.hidden).toBe(true);
+  });
+
   it('keeps a fixed bug for the hunt and stops it taking clicks; one dropped without a fix goes at once', () => {
     const p = page();
     p.onOrder({ t: 'bugs', bugs: [problem, { ...problem, id: 'b2', message: 'other' }], fixed: [] });

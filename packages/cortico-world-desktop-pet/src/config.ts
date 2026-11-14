@@ -154,7 +154,11 @@ export type MicMode = 'hold' | 'toggle' | 'always';
 export type AsrEngine = 'funasr' | 'whisper' | 'system' | 'api';
 
 /** The deployment secrets this World reads, by what they are for. */
-export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY' } as const;
+export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY', teamToken: 'DESKTOP_PET_TEAM_TOKEN' } as const;
+/** The team token secret after signing out: a secret cannot be stored empty. */
+export const NO_TOKEN = '-';
+/** The team server a new install points at: one run locally with `pnpm run team-server`. */
+export const TEAM_URL = 'http://127.0.0.1:8791';
 
 /** Languages SenseVoiceSmall hears, by the app language that speaks them; it also takes `yue` and `auto`. */
 export const SENSEVOICE_LANGUAGES: Readonly<Record<string, string>> = { zh: 'zh', 'zh-Hant': 'zh', en: 'en', ja: 'ja', ko: 'ko' };
@@ -236,6 +240,11 @@ export interface DesktopPetConfigSection extends WorldSection {
    * commas) become bugs while they fail, and the person's notifications on pull requests and issues become events.
    */
   github: { enabled: boolean; repos: string };
+  /**
+   * The team server (src/team.ts), read while `enabled` and signed in: its address, and the org read, picked in the
+   * settings window. The sign-in token is the secret `DESKTOP_PET_SECRETS.teamToken`.
+   */
+  team: { enabled: boolean; url: string; org: number | null };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -322,6 +331,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   clipboardErrors: true,
   focus: { minutes: 25, breakMinutes: 5 },
   github: { enabled: false, repos: '' },
+  team: { enabled: false, url: TEAM_URL, org: null },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
@@ -371,6 +381,8 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
         [`${K}.focus.breakMinutes`]: { type: 'integer', title: c.breakMinutes.title, minimum: 1, maximum: FOCUS_MAX, 'x-suffix': c.focusMinutes.suffix, 'x-hot': true },
         [`${K}.github.enabled`]: { type: 'boolean', title: c.githubEnabled.title, description: c.githubEnabled.description, 'x-hot': true },
         [`${K}.github.repos`]: { type: 'string', title: c.githubRepos.title, description: c.githubRepos.description, 'x-hot': true },
+        [`${K}.team.enabled`]: { type: 'boolean', title: c.teamEnabled.title, description: c.teamEnabled.description, 'x-hot': true },
+        [`${K}.team.url`]: { type: 'string', title: c.teamUrl.title, description: c.teamUrl.description, 'x-hot': true },
         [`${K}.selfAdjust`]: { type: 'string', title: c.selfAdjust.title, enum: [...SELF_ADJUST], description: c.selfAdjust.description, 'x-hot': true },
         [`${K}.window.enabled`]: { type: 'boolean', title: c.windowEnabled.title, 'x-hot': false },
         [`${K}.window.scale`]: { type: 'number', title: c.scale.title, minimum: SCALE_MIN, maximum: SCALE_MAX, multipleOf: .05, 'x-hot': true },

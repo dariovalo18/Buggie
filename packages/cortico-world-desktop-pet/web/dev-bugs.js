@@ -1,5 +1,6 @@
 /**
- * The pet page's bugs and its offer to explain a copied error.
+ * The pet page's bugs and its offers: to explain a copied error, and, while the team server is connected, to explain a
+ * clicked bug or open a ticket for it.
  *
  * Bugs: each problem of a failed build or test run (src/bugs.ts) is a pixel ladybug crawling on the floor, coming in
  * from the nearest edge and scurrying off when the body comes close. Clicking one asks the bot to explain it
@@ -65,6 +66,10 @@ export function createDevBugs(o) {
   offer.setAttribute('role', 'dialog');
   doc.body.append(offer);
   let copied = null, copiedAt = 0, offerUntil = 0;
+  /** Signed in to the team server (`prefs.team`): a click asks between explaining and a ticket. */
+  let team = false;
+  /** The offer up came from a click: it stays while the bot talks. */
+  let clicked = false;
 
   const sizeNow = () => Math.max(14, SIZE * o.bounds().S / .42);
   const say = (p) => (p.file ? `${p.file}${p.line ? `:${p.line}` : ''}\n${p.message}` : p.message);
@@ -82,7 +87,8 @@ export function createDevBugs(o) {
       goal: fromLeft ? rnd(...COME_IN) * W : W - rnd(...COME_IN) * W };
     el.addEventListener('click', () => {
       if (bug.fixed) return;
-      o.send({ t: 'bug', id: bug.id });
+      if (team) openOffer(o.t('bugs.choose', { problem: bug.problem.message }), [[o.t('bugs.ticket'), false, () => o.send({ t: 'ticket', id: bug.id })], [o.t('clip.explain'), true, () => o.send({ t: 'bug', id: bug.id })]], true);
+      else o.send({ t: 'bug', id: bug.id });
       o.sfx.select?.();
       el.classList.remove('picked');
       void el.offsetWidth;
@@ -177,43 +183,48 @@ export function createDevBugs(o) {
     if (!offer.hidden) closeOffer();
   }
 
-  function openOffer() {
+  /** Shows `text` with `choices` ([label, primary, act]) and a dismiss button; a choice nods and closes it. */
+  function openOffer(text, choices, fromClick = false) {
+    clicked = fromClick;
     offer.innerHTML = '';
     const msg = doc.createElement('div');
     msg.className = 'b-text';
-    msg.textContent = o.t('clip.offer');
+    msg.textContent = text;
     const row = doc.createElement('div');
     row.className = 'd-row';
-    const text = copied;
     const button = (label, primary, act) => {
       const b = Object.assign(doc.createElement('button'), { type: 'button', className: `d-pill${primary ? ' primary' : ''}`, textContent: label });
       b.addEventListener('click', act);
       return b;
     };
-    row.append(button(o.t('clip.dismiss'), false, closeOffer), button(o.t('clip.explain'), true, () => {
-      o.send({ t: 'explain', text });
-      const w = o.words();
-      if (w.has('nod')) o.body()?.do('nod');
+    row.append(button(o.t('clip.dismiss'), false, closeOffer), ...choices.map(([label, primary, act]) => button(label, primary, () => {
+      act();
+      if (o.words().has('nod')) o.body()?.do('nod');
       closeOffer();
-    }));
+    })));
     offer.append(msg, row);
     offer.hidden = false;
     offer.classList.remove('pop');
     void offer.offsetWidth;
     offer.classList.add('pop');
     o.sfx.pop?.();
-    copied = null;
     offerUntil = T + OFFER_SECONDS;
+  }
+
+  function offerCopied() {
+    const text = copied;
+    copied = null;
+    openOffer(o.t('clip.offer'), [[o.t('clip.explain'), true, () => o.send({ t: 'explain', text })]]);
   }
 
   function closeOffer() { offer.hidden = true; }
 
   function stepOffer(l) {
     if (copied && T - copiedAt > OFFER_WAIT) copied = null;
-    if (!offer.hidden && (!o.free() || T > offerUntil)) closeOffer();
-    if (copied && offer.hidden && l && o.free()) openOffer();
+    if (!offer.hidden && ((!clicked && !o.free()) || T > offerUntil)) closeOffer();
+    if (copied && offer.hidden && l && o.free()) offerCopied();
     if (!offer.hidden && l?.bubble) o.place(offer, l.bubble);
   }
 
-  return { set, step, clipboard, closeOffer };
+  return { set, step, clipboard, closeOffer, setTeam(on) { team = on; } };
 }

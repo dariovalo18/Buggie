@@ -158,6 +158,8 @@ export default {
 
   // a bug of a build or test run on the floor, and the offer to explain a copied error (dev-bugs.js)
   'bugs.label': '蟲子：{problem}。點一下聽解釋',
+  'bugs.choose': '「{problem}」:要我解釋,還是在團隊伺服器上開工單?',
+  'bugs.ticket': '開工單',
   'clip.offer': '這看起來像一段錯誤訊息。要我解釋嗎？',
   'clip.explain': '解釋',
   'clip.dismiss': '不用了',

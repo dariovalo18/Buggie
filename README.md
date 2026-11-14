@@ -190,6 +190,7 @@ Open the settings window from the tray icon or from Buggie's right-click menu.
 | Habits | Language and names, automatic updates, usage statistics, walking and touch responses, which settings Buggie may change itself, shortcuts, display, sound, computer use, OBS overlay |
 | Dress up | Figure, colors and accessories; import or uninstall figure packs |
 | Voice input | Recognition engine or transcription service, model download, talk key, microphone, listening mode, speech threshold |
+| Team | The team server: your account, companies, members, work groups, projects and tickets |
 | System prompt | Persona and prompt templates; Ctrl+S saves, and **Apply now** puts the new prompt into the current conversation |
 | Usage & cost | Token usage and spending by day and model |
 | Chat | Conversation history, typing, images |
@@ -217,6 +218,14 @@ Provider extensions are under **Advanced mode → Model connections → Extensio
 
 If you quit the app while an extension is being installed or uninstalled, it waits for that install or uninstall to finish before quitting.
 
+### Team server
+
+A team server lets several Buggies share companies, work groups, projects and tickets. Each person registers one account and signs in from the **Team** page of the settings window. The account that creates a company owns it; owners and admins add people by username or share the company's invite code, and put them in work groups and projects. Tickets are numbered by project (`PAY-12`).
+
+While you are signed in, Buggie tells you when a ticket is assigned to you, when an unassigned ticket arrives in one of your work groups, and when your tickets change or get a comment. Ask Buggie to list, open, change or comment on tickets. Clicking a bug on the screen asks whether to explain it or open a ticket for it.
+
+To try it on one computer, run `pnpm run team-server` in the Buggie folder; it listens on `http://127.0.0.1:8791`, the address the Team page starts with. To run it on a server, see [team-server/README.md](team-server/README.md).
+
 ### Updates
 
 The Windows installer build and the AppImage download new versions in the background, and Buggie asks whether to restart and update when one is ready. Choose **Later** and it installs when you quit. To stop automatic updates, turn off **Habits → General → Automatic updates**: Buggie then stops checking and downloading, and an update that was already downloaded is not installed.
@@ -229,7 +238,7 @@ The Mac version, the deb and the Windows portable version do not update themselv
 - **Sent to the model service**: what you say and type, attached images, how you interact with Buggie, and screenshots during computer use. Only the service you configured receives them.
 - **Kept on your computer**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the recognized text is sent; if you choose a transcription service on the Voice input page, each sentence's recording goes to that service.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. They contain the app version, an outline of the system and hardware, which model service and model you use, which extensions are installed, how often and how long you use the app, settings, where in the program a crash happened, and a randomly generated install ID; no conversations, screenshots, keys, error messages or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn them off under **Habits → General → Usage statistics**.
-- **Other network access**: checking GitHub for new versions (the Windows installer build and the AppImage check at start and every 6 hours while automatic updates are on; the other builds check when the settings window opens); npm and the official extension index on GitHub for the extension market, and GitHub for votes and comments; ModelScope, falling back to Hugging Face, when downloading the speech model.
+- **Other network access**: checking GitHub for new versions (the Windows installer build and the AppImage check at start and every 6 hours while automatic updates are on; the other builds check when the settings window opens); npm and the official extension index on GitHub for the extension market, and GitHub for votes and comments; ModelScope, falling back to Hugging Face, when downloading the speech model; the team server at the address on the Team page, while you are signed in.
 
 ## Data and uninstalling
 

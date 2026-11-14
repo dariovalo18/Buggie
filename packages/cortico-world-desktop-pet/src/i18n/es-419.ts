@@ -233,6 +233,8 @@ const es419: Translation<PetText> = {
     breakMinutes: { title: 'Duración del descanso' },
     githubEnabled: { title: 'GitHub', description: 'Lee GitHub cada pocos minutos: las ejecuciones de Actions que fallan en los repositorios de abajo se vuelven bichos en la pantalla, que Buggie se come cuando pasan, y tus notificaciones de pull requests e issues le llegan a Buggie. El token sale de GH_TOKEN, GITHUB_TOKEN o la línea de comandos gh con sesión iniciada; sin token solo se leen repositorios públicos, con menos frecuencia.' },
     githubRepos: { title: 'Repositorios', description: 'owner/repo, varios separados por comas.' },
+    teamEnabled: { title: 'Servidor del equipo', description: 'Conecta con el servidor del equipo: los tickets asignados a ti, los nuevos de tus grupos de trabajo y las novedades de tus tickets le llegan a Buggie, y Buggie puede leer, abrir y cambiar tickets. Inicia sesión en la página Equipo de la ventana de configuración.' },
+    teamUrl: { title: 'Dirección del servidor', description: 'La dirección del servidor del equipo, por ejemplo http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Autoajuste', description: 'off: Buggie no puede cambiar los ajustes ni quedarse en silencio un rato. default: personaje, atuendo, paseos y ronquidos cambian directamente; tamaño, tamaño de las burbujas, tamaño del texto, sonidos, modo nocturno, botones al pasar el cursor y cómo te llama esperan tu consentimiento. any: todo cambia directamente. custom: según lo marcado en la página Hábitos; lo marcado cambia directamente y lo demás espera tu consentimiento.' },
     windowEnabled: { title: 'Abrir la ventana de la mascota al iniciar' },
     scale: { title: 'Tamaño' },

@@ -405,6 +405,7 @@ function applyPrefs(p) {
   if (typeof p.doubleClickChat === 'boolean') prefs.doubleClickChat = p.doubleClickChat;
   if (typeof p.statusBubble === 'boolean') { prefs.statusBubble = p.statusBubble; setBody({ thoughtShown: p.statusBubble }); }
   if ('focus' in p) focus.set(p.focus);
+  if (typeof p.team === 'boolean') dev.setTeam(p.team);
   if (typeof p.clipboardErrors === 'boolean') { host?.watchClipboard?.(p.clipboardErrors); if (!p.clipboardErrors) dev.closeOffer(); }
   if (typeof p.saidBubbles === 'boolean') { prefs.saidBubbles = p.saidBubbles; if (!p.saidBubbles) for (const line of lines) if (!line.live) fadeLine(line); }
   if (typeof p.lockFrameRate === 'boolean') prefs.lockFrameRate = p.lockFrameRate;

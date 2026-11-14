@@ -233,6 +233,8 @@ const ptBR: Translation<PetText> = {
     breakMinutes: { title: 'Duração da pausa' },
     githubEnabled: { title: 'GitHub', description: 'Lê o GitHub a cada poucos minutos: execuções do Actions que falham nos repositórios abaixo viram bugs na tela, comidos quando passam, e suas notificações de pull requests e issues chegam ao Buggie. O token vem de GH_TOKEN, GITHUB_TOKEN ou da linha de comando gh com sessão iniciada; sem token, só repositórios públicos são lidos, com menos frequência.' },
     githubRepos: { title: 'Repositórios', description: 'owner/repo, vários separados por vírgulas.' },
+    teamEnabled: { title: 'Servidor da equipe', description: 'Conecta ao servidor da equipe: tickets atribuídos a você, novos tickets dos seus grupos de trabalho e novidades dos seus tickets chegam ao Buggie, e o Buggie pode ler, abrir e alterar tickets. Entre na página Equipe da janela de configurações.' },
+    teamUrl: { title: 'Endereço do servidor', description: 'O endereço do servidor da equipe, por exemplo http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Autoajuste', description: 'off: Buggie não pode mudar as configurações nem fazer silêncio por um tempo. default: personagem, visual, passeios e ronco mudam direto; tamanho, tamanho dos balões, tamanho do texto, sons, modo noturno, botões ao passar o mouse e como chama você esperam seu consentimento. any: tudo muda direto. custom: conforme marcado na página Hábitos; o que estiver marcado muda direto e o resto espera seu consentimento.' },
     windowEnabled: { title: 'Abrir a janela do pet ao iniciar' },
     scale: { title: 'Tamanho' },

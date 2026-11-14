@@ -233,6 +233,8 @@ const it: Translation<PetText> = {
     breakMinutes: { title: 'Durata della pausa' },
     githubEnabled: { title: 'GitHub', description: 'Legge GitHub ogni pochi minuti: le esecuzioni di Actions che falliscono nei repository qui sotto diventano bug sullo schermo, mangiati quando passano, e le tue notifiche su pull request e issue arrivano a Buggie. Il token viene da GH_TOKEN, GITHUB_TOKEN o dalla riga di comando gh con accesso effettuato; senza token si leggono solo i repository pubblici, meno spesso.' },
     githubRepos: { title: 'Repository', description: 'owner/repo, più di uno separati da virgole.' },
+    teamEnabled: { title: 'Server del team', description: 'Si collega al server del team: i ticket assegnati a te, i nuovi ticket dei tuoi gruppi di lavoro e le novità sui tuoi ticket arrivano a Buggie, che può leggere, aprire e modificare ticket. Accedi dalla pagina Team della finestra delle impostazioni.' },
+    teamUrl: { title: 'Indirizzo del server', description: 'L\'indirizzo del server del team, ad esempio http://127.0.0.1:8791.' },
     selfAdjust: { title: 'Autoregolazione', description: 'off: Buggie non può cambiare le impostazioni né mettersi in silenzio per un po\'. default: personaggio, abiti, movimento e russare cambiano direttamente; dimensione, dimensione dei fumetti, dimensione del testo, suoni, modalità notte, pulsanti al passaggio e come ti chiama aspettano il tuo consenso. any: tutto cambia direttamente. custom: come spuntato nella pagina Abitudini; ciò che è spuntato cambia direttamente, il resto aspetta il tuo consenso.' },
     windowEnabled: { title: "Apri la finestra dell'animaletto all'avvio" },
     scale: { title: 'Dimensione' },
