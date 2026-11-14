@@ -169,7 +169,7 @@ export class OwnBot {
   }
 }
 
-/** Given while a Telegram chat is linked, either way. */
+/** Always given: the tool list only reaches the model when the prefix is rebuilt, so it fails with the reason until a chat is linked. */
 export const TELEGRAM_TOOL_DECLS: Array<Omit<ToolDef, 'handler'>> = [{
   name: 'telegram_send',
   tags: ['act'],

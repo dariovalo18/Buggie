@@ -1,5 +1,5 @@
 /**
- * The team server's tools, given while the person is signed in with an org picked (`TeamClient.ready`).
+ * The team server's tools, given while the person is signed in; a call before the server answered fails with its code.
  * Each answers with the server's JSON; a failure is the server's error code.
  */
 import type { ToolDef, ToolOutcome } from 'cortico/core/types.ts';

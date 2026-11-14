@@ -30,7 +30,7 @@ const DESCRIBE: WorldDescribe = {
     ticket_create: { zh: '在团队服务器的某个项目里新建工单,再问齐还缺的细节。', en: 'Opens a ticket in a project on the team server, then asks for the details still missing.' },
     ticket_update: { zh: '修改工单的状态、负责人、工作组、优先级、标题、类型或细节。', en: "Changes a ticket's status, assignee, work group, priority, title, kind or details." },
     ticket_comment: { zh: '在工单下评论。', en: 'Comments on a ticket.' },
-    telegram_send: { zh: '在 Telegram 上给使用者发消息。只在连接了 Telegram 时给出。', en: 'Sends the person a message on Telegram. Given while Telegram is linked.' },
+    telegram_send: { zh: '在 Telegram 上给使用者发消息;Telegram 没连好时失败并说明原因。', en: 'Sends the person a message on Telegram; fails with the reason while Telegram is not linked.' },
     pet_cua_open_settings: { zh: '电脑操作关着时,把设置窗口打开到它的开关,附风险说明。', en: 'While computer use is off, opens the settings window at its switch, with what it risks.' },
     pet_cua_screenshot: { zh: '截取一块显示器,附鼠标位置与前台窗口标题。', en: 'Captures one display, with the pointer position and the foreground window title.' },
     pet_cua_zoom: { zh: '从屏幕重新截取截图里的一块,读看不清的小字。', en: 'Captures a region of the screenshot again from the screen, for small text.' },

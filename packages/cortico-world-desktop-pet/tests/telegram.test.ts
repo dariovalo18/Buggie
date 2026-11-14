@@ -69,24 +69,27 @@ async function mounted(tgApi: string, team?: { url: string }) {
   cleanup.push(() => world.stop());
   const panel = (method: string, args: unknown[] = []) => world.webUi().invoke!('pet', method, args) as Promise<Record<string, any>>;
   const tool = (name: string) => world.tools().find((t) => t.name === name);
-  return { cfg, world, host, panel, secrets, tool };
+  const toolNames = () => world.tools().map((t) => t.name).join(',');
+  return { cfg, world, host, panel, secrets, tool, toolNames };
 }
 
 describe('Telegram through the person\'s own bot', () => {
   it('checks the token, links the chat that sends the code, wakes the bot with its messages and answers only it', async () => {
     const tg = await fakeTelegram();
-    const { cfg, host, panel, secrets, tool } = await mounted(tg.api);
+    const { cfg, host, panel, secrets, tool, toolNames } = await mounted(tg.api);
     expect((await panel('telegramToken', ['wrong'])).error).toBe('telegram_token_invalid');
     const state = await panel('telegramToken', ['T1']);
     expect(state).toMatchObject({ error: null, mode: 'own', own: { hasToken: true, bot: 'acme_bot', linked: null } });
     expect(secrets.telegram).toBe('T1');
-    expect(tool('telegram_send')).toBeUndefined();
+    // declared before the link, so linking needs no prefix reload; until then it says why it cannot
+    const before = toolNames();
+    expect(await tool('telegram_send')!.handler({ text: 'hi' }, {} as never)).toMatchObject({ failed: true, text: expect.stringContaining('no Telegram chat is linked') });
     const { linkCode } = await panel('telegramLink');
     expect(linkCode.url).toBe(`https://t.me/acme_bot?start=${linkCode.code}`);
     tg.say(501, 'bruno_tg', `/start ${linkCode.code}`);
     await expect.poll(() => cfg.telegram).toEqual({ mode: 'own', chat: 501, name: '@bruno_tg' });
     expect(tg.sent.map((m) => m.chat_id)).toEqual([501]);
-    expect(tool('telegram_send')).toBeDefined();
+    expect(toolNames()).toBe(before);
     tg.say(77, 'eve_tg', 'hello?');
     tg.say(501, 'bruno_tg', 'any tickets for me?');
     await expect.poll(() => host.events.map((e) => e.type)).toContain('desktop-pet.telegram');
@@ -99,7 +102,7 @@ describe('Telegram through the person\'s own bot', () => {
     expect(await tool('telegram_send')!.handler({ text: 'Two: PAY-1 and PAY-2.' }, {} as never)).toEqual({ text: 'sent' });
     expect(tg.sent.at(-1)).toEqual({ chat_id: 501, text: 'Two: PAY-1 and PAY-2.' });
     await panel('telegramUnlink');
-    expect(tool('telegram_send')).toBeUndefined();
+    expect(await tool('telegram_send')!.handler({ text: 'hi' }, {} as never)).toMatchObject({ failed: true });
     await panel('telegramToken', ['']);
     expect(secrets.telegram).toBe(NO_TOKEN);
   });
@@ -130,7 +133,6 @@ describe("Telegram through the company's bot on the team server", () => {
     expect(team.bot).toBe('acme_bot');
     tg.say(501, 'bruno_tg', `/start ${linkCode.code}`);
     await expect.poll(async () => (await panel('telegramState')).team.linked).toBe('@bruno_tg');
-    await expect.poll(() => !!tool('telegram_send')).toBe(true);
     tg.say(501, 'bruno_tg', 'any tickets for me?');
     await expect.poll(() => host.events.find((e) => e.type === 'desktop-pet.telegram')?.text ?? '').toContain('any tickets for me?');
     expect(await tool('telegram_send')!.handler({ text: 'None today.' }, {} as never)).toEqual({ text: 'sent' });

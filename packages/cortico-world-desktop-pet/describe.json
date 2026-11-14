@@ -590,8 +590,8 @@
         "act"
       ],
       "summary": {
-        "zh": "在 Telegram 上给使用者发消息。只在连接了 Telegram 时给出。",
-        "en": "Sends the person a message on Telegram. Given while Telegram is linked."
+        "zh": "在 Telegram 上给使用者发消息;Telegram 没连好时失败并说明原因。",
+        "en": "Sends the person a message on Telegram; fails with the reason while Telegram is not linked."
       }
     },
     {

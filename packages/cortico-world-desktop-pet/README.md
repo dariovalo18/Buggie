@@ -27,7 +27,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 | `pet_set(…)` | 改自己的外观和习惯,见「自己调整」 | 自己能改的立即返回;要问的等对方回答 |
 | `pet_quiet(minutes, sound, roam)` | 临时安静:默认关音效、站着不动,到点恢复,设置不变 | 立即返回 |
 | `team_info()`、`ticket_list(…)`、`ticket_get(ref)`、`ticket_create(…)`、`ticket_update(ref, …)`、`ticket_comment(ref, body)` | 团队服务器:帐号、组织、成员、工作组和项目;工单的列表、详情、新建、修改和评论,见「团队服务器」。只在登录并选了公司时给出 | 服务器回的 JSON;失败时是它的错误码 |
-| `telegram_send(text)` | 在 Telegram 上给使用者发消息,见「Telegram」。只在连接了聊天时给出 | `sent`;失败时是错误码 |
+| `telegram_send(text)` | 在 Telegram 上给使用者发消息,见「Telegram」。一直都在;没连接聊天时失败并说明原因 | `sent`;失败时是错误码或原因 |
 | `pet_see_self()` | 取一张调用那一刻桌宠身体在屏幕上的图:当前形象、打扮、姿态和表情,灰色底,不含气泡和桌面 | 图和一行形象与打扮的名字;桌宠窗口隐藏、没连接,或桌宠页开在浏览器里时失败并写明原因,见「身体图片」 |
 
 表情和动作的词表是当前形象包的 `vocab`(解析在 `src/script.ts`),词的 id 与各语言的名字都认;环境提示词 `src/ENV_PROMPT.md`(英文版 `src/ENV_PROMPT.en.md`)把它渲染成表格,前缀重建时更新。

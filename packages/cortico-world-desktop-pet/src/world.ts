@@ -1604,6 +1604,11 @@ export class DesktopPetWorld implements World {
   }
 
   /** A Telegram chat is linked, the way the mode says: the tool is given. */
+  private teamSignedIn(): boolean {
+    const t = this.opts.teamToken?.() ?? '';
+    return !!t && t !== NO_TOKEN;
+  }
+
   private telegramReady(): boolean {
     const { mode } = this.cfg.telegram;
     return mode === 'own' ? this.ownBot.ready : mode === 'team' ? this.team.ready && !!this.teamTelegram?.link : false;
@@ -1617,6 +1622,12 @@ export class DesktopPetWorld implements World {
   private async telegramSend(args: Record<string, unknown>): Promise<ToolOutcome> {
     const text = typeof args.text === 'string' ? args.text.trim() : '';
     if (!text) return { text: 'telegram: text is empty', failed: true };
+    if (!this.telegramReady()) {
+      const why = this.cfg.telegram.mode === 'off' ? 'Telegram is off'
+        : this.cfg.telegram.mode === 'team' && !this.team.ready ? 'the team server is not connected'
+        : 'no Telegram chat is linked';
+      return { text: `telegram: ${why}; the person can set it up in Settings → Telegram`, failed: true };
+    }
     try {
       if (this.cfg.telegram.mode === 'own') await this.ownBot.send(text);
       else await this.team.call('POST', this.team.orgPath('/telegram/send'), { text });
@@ -2190,11 +2201,14 @@ export class DesktopPetWorld implements World {
       pet_cua_open_settings: async () => this.openCuaSettings(),
     };
     const own = petToolDecls(this.appLanguage).map((decl) => ({ ...decl, handler: handlers[decl.name], ...(decl.name === 'pet_move_to' ? { interruptible: true } : {}) }));
-    if (this.team.ready) {
+    // The tool list is read when the system prefix is built, and a change only reaches the model on the next
+    // reload: the team's tools come with the sign-in, not with the server's first answer, and telegram_send is
+    // always there, saying why when Telegram is not linked yet.
+    if (this.cfg.team.enabled && this.teamSignedIn()) {
       const team = teamHandlers(this.team);
       own.push(...TEAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: team[decl.name]! })));
     }
-    if (this.telegramReady()) own.push(...TELEGRAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: (args: Record<string, unknown>) => this.telegramSend(args) })));
+    own.push(...TELEGRAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: (args: Record<string, unknown>) => this.telegramSend(args) })));
     if (this.cuaOn) return [...own, ...this.cua.tools()];
     return this.cuaCanOpen ? [...own, ...CUA_OFF_TOOL_DECLS.map((decl) => ({ ...decl, handler: handlers[decl.name] }))] : own;
   }
