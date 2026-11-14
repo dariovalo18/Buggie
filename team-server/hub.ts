@@ -15,6 +15,7 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
+import { poll, TELEGRAM_API, TelegramBot, TelegramError, type Poller, type TelegramMessage } from './telegram.ts';
 
 const MAX_BODY = 256 * 1024;
 const NAME_MAX = 80;
@@ -49,6 +50,12 @@ export const NEEDED: Record<typeof KINDS[number], readonly Detail[]> = {
   task: ['body', 'acceptance'],
 };
 export const ROLES = ['owner', 'admin', 'member'] as const;
+/** When a linked person hears of their tickets on Telegram: always, only while their Buggie is not connected, or never. */
+export const NOTIFY = ['always', 'offline', 'never'] as const;
+/** How long a Telegram link code stays good. */
+export const LINK_CODE_MS = 10 * 60_000;
+/** A Buggie that read `/changes` this recently, or is waiting in it, is connected. */
+const ONLINE_MS = 15_000;
 type Role = typeof ROLES[number];
 
 const USERNAME = /^[a-z0-9][a-z0-9._-]{1,31}$/;
@@ -112,6 +119,19 @@ const SCHEMA = `
     ticket_id INTEGER REFERENCES tickets ON DELETE CASCADE, data TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS activity_by_org ON activity (org_id, seq);
+  CREATE TABLE IF NOT EXISTS org_telegram (
+    org_id INTEGER PRIMARY KEY REFERENCES orgs ON DELETE CASCADE, token TEXT NOT NULL, username TEXT NOT NULL,
+    next_update INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS telegram_links (
+    org_id INTEGER NOT NULL REFERENCES orgs ON DELETE CASCADE, user_id INTEGER NOT NULL REFERENCES users ON DELETE CASCADE,
+    tg_user INTEGER NOT NULL, chat_id INTEGER NOT NULL, tg_name TEXT NOT NULL, notify TEXT NOT NULL DEFAULT 'offline',
+    PRIMARY KEY (org_id, user_id), UNIQUE (org_id, tg_user)
+  );
+  CREATE TABLE IF NOT EXISTS telegram_codes (
+    code TEXT PRIMARY KEY, org_id INTEGER NOT NULL REFERENCES orgs ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users ON DELETE CASCADE, expires INTEGER NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS tickets_by_assignee ON tickets (assignee_id, status);
 `;
 
@@ -161,6 +181,10 @@ export interface HubOptions {
   dbFile: string;
   /** Read the client address from `X-Forwarded-For`, as a reverse proxy in front writes it. */
   trustProxy?: boolean;
+  /** Telegram's Bot API address; tests point it at a local stand-in. */
+  telegramApi?: string;
+  /** The pause after a failed Telegram read, in milliseconds. */
+  telegramRetryMs?: number;
 }
 
 export interface Hub {
@@ -176,6 +200,10 @@ export function createHub(o: HubOptions): Hub {
   for (const [name, type] of [['kind', `TEXT NOT NULL DEFAULT 'bug'`], ...DETAILS.filter((d) => d !== 'body').map((d) => [d, `TEXT NOT NULL DEFAULT ''`])]) {
     if (!columns.has(name)) db.exec(`ALTER TABLE tickets ADD COLUMN ${name} ${type}`);
   }
+  // an entry for one person only (a Telegram message to their Buggie); null is the whole org's
+  if (!(db.prepare('PRAGMA table_info(activity)').all() as Row[]).some((c) => c.name === 'recipient_id')) {
+    db.exec('ALTER TABLE activity ADD COLUMN recipient_id INTEGER REFERENCES users ON DELETE CASCADE');
+  }
   const one = (sql: string, ...args: unknown[]) => db.prepare(sql).get(...args as never[]) as Row | undefined;
   const all = (sql: string, ...args: unknown[]) => db.prepare(sql).all(...args as never[]) as Row[];
   const run = (sql: string, ...args: unknown[]) => db.prepare(sql).run(...args as never[]);
@@ -186,6 +214,12 @@ export function createHub(o: HubOptions): Hub {
 
   /** Requests waiting in `/changes`, by org; each is woken by the org's next activity entry. */
   const waiting = new Map<number, Set<() => void>>();
+  /** Per `org:user`: requests waiting in `/changes` now, and when the last one ended. */
+  const polling = new Map<string, { n: number; at: number }>();
+  const online = (orgId: number, userId: number) => {
+    const p = polling.get(`${orgId}:${userId}`);
+    return !!p && (p.n > 0 || Date.now() - p.at < ONLINE_MS);
+  };
   const loginFails = new Map<string, { fails: number; until: number }>();
   const rates = new Map<string, { n: number; since: number }>();
 
@@ -210,10 +244,12 @@ export function createHub(o: HubOptions): Hub {
     if (++r.n > RATE_MAX) fail(429, 'too_many_attempts');
   }
 
-  function log(orgId: number, actorId: number, kind: string, ticketId: number | null, data: object): void {
-    run('INSERT INTO activity (org_id, at, actor_id, kind, ticket_id, data) VALUES (?, ?, ?, ?, ?, ?)', orgId, now(), actorId, kind, ticketId, JSON.stringify(data));
+  function log(orgId: number, actorId: number, kind: string, ticketId: number | null, data: object, recipientId: number | null = null): void {
+    run('INSERT INTO activity (org_id, at, actor_id, kind, ticket_id, data, recipient_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      orgId, now(), actorId, kind, ticketId, JSON.stringify(data), recipientId);
     const wake = waiting.get(orgId);
     if (wake) { waiting.delete(orgId); for (const w of wake) w(); }
+    if (ticketId !== null) telegramNotices(orgId, actorId, kind, ticketId, data as Row);
   }
 
   // ---------- accounts ----------
@@ -394,6 +430,7 @@ export function createHub(o: HubOptions): Hub {
       run('DELETE FROM sector_members WHERE user_id = ? AND sector_id IN (SELECT id FROM sectors WHERE org_id = ?)', id, orgId);
       run('DELETE FROM project_members WHERE user_id = ? AND project_id IN (SELECT id FROM projects WHERE org_id = ?)', id, orgId);
       run('DELETE FROM org_members WHERE org_id = ? AND user_id = ?', orgId, id);
+      run('DELETE FROM telegram_links WHERE org_id = ? AND user_id = ?', orgId, id);
     });
     return id === c.userId ? profile(c.userId) : orgView(orgId, c.userId);
   }
@@ -403,6 +440,7 @@ export function createHub(o: HubOptions): Hub {
     const id = Number(c.params[0]);
     if (roleIn(id, c.userId) !== 'owner') fail(403, 'owner_only');
     if (c.body.name !== one('SELECT name FROM orgs WHERE id = ?', id)!.name) fail(400, 'name_mismatch');
+    stopBot(id);
     run('DELETE FROM orgs WHERE id = ?', id);
     return profile(c.userId);
   }
@@ -625,12 +663,19 @@ export function createHub(o: HubOptions): Hub {
   async function changes(c: Ctx) {
     const orgId = orgOf(c);
     const last = () => (one('SELECT MAX(seq) AS seq FROM activity WHERE org_id = ?', orgId)!.seq as number | null) ?? 0;
+    // every read, the first one without `since` too, shows the reader's Buggie connected
+    const key = `${orgId}:${c.userId}`;
+    const presence = polling.get(key) ?? { n: 0, at: 0 };
+    polling.set(key, presence);
+    presence.at = Date.now();
     if (!c.query.has('since')) return { seq: last(), changes: [] };
     const since = Number(c.query.get('since')) || 0;
-    const read = () => all('SELECT * FROM activity WHERE org_id = ? AND seq > ? ORDER BY seq LIMIT ?', orgId, since, CHANGES_MAX);
+    const read = () => all('SELECT * FROM activity WHERE org_id = ? AND seq > ? AND (recipient_id IS NULL OR recipient_id = ?) ORDER BY seq LIMIT ?',
+      orgId, since, c.userId, CHANGES_MAX);
     let rows = read();
     const wait = Math.min(Math.max(Number(c.query.get('wait')) || 0, 0), WAIT_MAX);
     if (!rows.length && wait) {
+      presence.n++;
       await new Promise<void>((resolve) => {
         const set = waiting.get(orgId) ?? new Set();
         waiting.set(orgId, set);
@@ -639,6 +684,8 @@ export function createHub(o: HubOptions): Hub {
         set.add(done);
         c.res.on('close', done);
       });
+      presence.n--;
+      presence.at = Date.now();
       rows = read();
     }
     return {
@@ -649,6 +696,161 @@ export function createHub(o: HubOptions): Hub {
       }),
     };
   }
+
+  // ---------- Telegram ----------
+
+  /** Each org's bot, read while the server runs. */
+  const bots = new Map<number, { bot: TelegramBot; poller: Poller }>();
+  const telegramApi = o.telegramApi ?? TELEGRAM_API;
+
+  function startBot(orgId: number): void {
+    stopBot(orgId);
+    const row = one('SELECT token, next_update FROM org_telegram WHERE org_id = ?', orgId);
+    if (!row) return;
+    const bot = new TelegramBot(telegramApi, row.token as string);
+    const poller = poll(bot, row.next_update as number, {
+      retryMs: o.telegramRetryMs ?? 5_000,
+      onMessage: (m) => onTelegram(orgId, bot, m),
+      onOffset: (next) => { run('UPDATE org_telegram SET next_update = ? WHERE org_id = ?', next, orgId); },
+      onError: (code) => console.error(`telegram bot of org ${orgId}: ${code}`),
+    });
+    bots.set(orgId, { bot, poller });
+  }
+  function stopBot(orgId: number): void {
+    bots.get(orgId)?.poller.stop();
+    bots.delete(orgId);
+  }
+  function removeBot(orgId: number): void {
+    stopBot(orgId);
+    tx(() => {
+      run('DELETE FROM org_telegram WHERE org_id = ?', orgId);
+      run('DELETE FROM telegram_links WHERE org_id = ?', orgId);
+      run('DELETE FROM telegram_codes WHERE org_id = ?', orgId);
+    });
+  }
+  const say = (bot: TelegramBot, chatId: number, message: string) =>
+    bot.send(chatId, message).catch((e) => console.error(`telegram send: ${e instanceof TelegramError ? e.code : e}`));
+
+  /** A private message to an org's bot: a link code, or a message for the sender's Buggie. */
+  async function onTelegram(orgId: number, bot: TelegramBot, m: TelegramMessage): Promise<void> {
+    const org = one('SELECT name FROM orgs WHERE id = ?', orgId);
+    if (!org) return;
+    const said = m.text.trim();
+    const code = (/^\/start(?:\s+(\S+))?$/.exec(said)?.[1] ?? said).toUpperCase();
+    const pending = one('SELECT user_id, expires FROM telegram_codes WHERE code = ? AND org_id = ?', code, orgId);
+    if (pending && (pending.expires as number) > Date.now()) {
+      const userId = pending.user_id as number;
+      tx(() => {
+        run('DELETE FROM telegram_codes WHERE code = ?', code);
+        run('DELETE FROM telegram_links WHERE org_id = ? AND (user_id = ? OR tg_user = ?)', orgId, userId, m.userId);
+        run('INSERT INTO telegram_links (org_id, user_id, tg_user, chat_id, tg_name) VALUES (?, ?, ?, ?, ?)', orgId, userId, m.userId, m.chatId, m.name);
+        log(orgId, userId, 'telegram.linked', null, { telegram: m.name }, userId);
+      });
+      await say(bot, m.chatId, `Linked: you are ${person(userId)!.username} in ${org.name}. Write here to talk to your Buggie.`);
+      return;
+    }
+    const link = one('SELECT user_id FROM telegram_links WHERE org_id = ? AND tg_user = ?', orgId, m.userId);
+    if (!link) {
+      await say(bot, m.chatId, `This bot answers the members of ${org.name} who linked their account: open Buggie's settings, Telegram page, and link it there.`);
+      return;
+    }
+    const userId = link.user_id as number;
+    if (/^\/start\b/.test(said)) { await say(bot, m.chatId, 'You are linked. Write here to talk to your Buggie.'); return; }
+    if (!online(orgId, userId)) { await say(bot, m.chatId, 'Your Buggie is not connected right now, so this message did not reach it.'); return; }
+    log(orgId, userId, 'telegram.message', null, { text: m.text.slice(0, TEXT_MAX) }, userId);
+  }
+
+  /** Tells the people a ticket entry concerns on Telegram, by their choice of when. */
+  function telegramNotices(orgId: number, actorId: number, kind: string, ticketId: number, data: Row): void {
+    const entry = bots.get(orgId);
+    if (!entry) return;
+    const t = one(`${TICKET_SELECT} WHERE t.id = ?`, ticketId);
+    if (!t) return;
+    const actor = person(actorId)?.name ?? '?';
+    const head = `${t.project_key}-${t.number} "${t.title}"`;
+    const told = new Map<number, string>();
+    const tell = (id: unknown, message: string) => { if (typeof id === 'number' && id !== actorId && !told.has(id)) told.set(id, message); };
+    const fields = (data.fields ?? {}) as Record<string, { to?: unknown }>;
+    if (kind === 'ticket.created') {
+      if (t.assignee_id !== null) tell(t.assignee_id, `${head}: ${actor} assigned it to you.`);
+      else if (t.sector_id !== null) {
+        for (const r of all('SELECT user_id FROM sector_members WHERE sector_id = ?', t.sector_id)) tell(r.user_id, `${head}: ${actor} opened it in ${t.sector_name}; nobody has it yet.`);
+      }
+    } else if (kind === 'ticket.updated') {
+      if (fields.assignee?.to) tell(t.assignee_id, `${head}: ${actor} assigned it to you.`);
+      for (const id of [t.assignee_id, t.author_id]) tell(id, `${head}: ${actor} changed ${Object.keys(fields).join(', ')}.`);
+    } else if (kind === 'ticket.comment') {
+      for (const id of [t.assignee_id, t.author_id]) tell(id, `${head}: ${actor} commented: ${String(data.excerpt ?? '')}`);
+    }
+    for (const [userId, message] of told) {
+      const link = one('SELECT chat_id, notify FROM telegram_links WHERE org_id = ? AND user_id = ?', orgId, userId);
+      if (!link || link.notify === 'never' || (link.notify === 'offline' && online(orgId, userId))) continue;
+      void say(entry.bot, link.chat_id as number, message);
+    }
+  }
+
+  function telegramState(orgId: number, userId: number) {
+    const bot = one('SELECT username FROM org_telegram WHERE org_id = ?', orgId);
+    const link = one('SELECT tg_name, notify FROM telegram_links WHERE org_id = ? AND user_id = ?', orgId, userId);
+    return { bot: bot ? { username: bot.username } : null, link: link ? { name: link.tg_name, notify: link.notify } : null };
+  }
+
+  async function setBot(c: Ctx) {
+    const orgId = adminOrg(c);
+    const token = text(c.body.token, 200, true, 'token')!;
+    let username: string;
+    try {
+      username = await new TelegramBot(telegramApi, token).username();
+    } catch (e) {
+      const bad = e instanceof TelegramError && e.code === 'unauthorized';
+      return fail(bad ? 400 : 502, bad ? 'telegram_token_invalid' : 'telegram_unreachable');
+    }
+    const before = one('SELECT username FROM org_telegram WHERE org_id = ?', orgId);
+    // another bot: the links were to the old one's chats
+    if (before && before.username !== username) removeBot(orgId);
+    run(`INSERT INTO org_telegram (org_id, token, username) VALUES (?, ?, ?)
+      ON CONFLICT (org_id) DO UPDATE SET token = excluded.token, username = excluded.username`, orgId, token, username);
+    startBot(orgId);
+    return telegramState(orgId, c.userId);
+  }
+
+  function linkCode(c: Ctx) {
+    const orgId = orgOf(c);
+    const bot = one('SELECT username FROM org_telegram WHERE org_id = ?', orgId) ?? fail(409, 'telegram_no_bot');
+    run('DELETE FROM telegram_codes WHERE expires < ? OR (org_id = ? AND user_id = ?)', Date.now(), orgId, c.userId);
+    // 8 letters and digits without the look-alikes (0/O, 1/I)
+    const code = Array.from(randomBytes(8), (b) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('');
+    run('INSERT INTO telegram_codes (code, org_id, user_id, expires) VALUES (?, ?, ?, ?)', code, orgId, c.userId, Date.now() + LINK_CODE_MS);
+    return { code, url: `https://t.me/${bot.username}?start=${code}`, expiresIn: LINK_CODE_MS / 1000 };
+  }
+
+  function setNotify(c: Ctx) {
+    const orgId = orgOf(c);
+    const notify = oneOf(c.body.notify, NOTIFY, 'notify') ?? fail(400, 'notify_required');
+    if (!run('UPDATE telegram_links SET notify = ? WHERE org_id = ? AND user_id = ?', notify, orgId, c.userId).changes) fail(409, 'telegram_not_linked');
+    return telegramState(orgId, c.userId);
+  }
+
+  function unlink(c: Ctx) {
+    const orgId = orgOf(c);
+    run('DELETE FROM telegram_links WHERE org_id = ? AND user_id = ?', orgId, c.userId);
+    return telegramState(orgId, c.userId);
+  }
+
+  async function sendTelegram(c: Ctx) {
+    const orgId = orgOf(c);
+    const message = text(c.body.text, TEXT_MAX, true, 'text')!;
+    const link = one('SELECT chat_id FROM telegram_links WHERE org_id = ? AND user_id = ?', orgId, c.userId) ?? fail(409, 'telegram_not_linked');
+    const entry = bots.get(orgId) ?? fail(409, 'telegram_no_bot');
+    try {
+      await entry.bot.send(link.chat_id as number, message);
+    } catch (e) {
+      return fail(502, e instanceof TelegramError && e.code === 'telegram_403' ? 'telegram_blocked' : 'telegram_unreachable');
+    }
+    return { ok: true };
+  }
+
+  for (const r of all('SELECT org_id FROM org_telegram')) startBot(r.org_id as number);
 
   // ---------- routing ----------
 
@@ -685,6 +887,13 @@ export function createHub(o: HubOptions): Hub {
     ['PATCH', new RegExp(`^/v1/orgs/${ID}/tickets/${NAME}$`), updateTicket],
     ['POST', new RegExp(`^/v1/orgs/${ID}/tickets/${NAME}/comments$`), comment],
     ['GET', new RegExp(`^/v1/orgs/${ID}/changes$`), changes],
+    ['GET', new RegExp(`^/v1/orgs/${ID}/telegram$`), (c) => telegramState(orgOf(c), c.userId)],
+    ['PUT', new RegExp(`^/v1/orgs/${ID}/telegram$`), setBot],
+    ['DELETE', new RegExp(`^/v1/orgs/${ID}/telegram$`), (c) => { const id = adminOrg(c); removeBot(id); return telegramState(id, c.userId); }],
+    ['POST', new RegExp(`^/v1/orgs/${ID}/telegram/link$`), linkCode],
+    ['PATCH', new RegExp(`^/v1/orgs/${ID}/telegram/link$`), setNotify],
+    ['DELETE', new RegExp(`^/v1/orgs/${ID}/telegram/link$`), unlink],
+    ['POST', new RegExp(`^/v1/orgs/${ID}/telegram/send$`), sendTelegram],
   ];
 
   function bearer(req: IncomingMessage) {
@@ -747,6 +956,7 @@ export function createHub(o: HubOptions): Hub {
   return {
     server,
     close: () => new Promise((resolve) => {
+      for (const id of [...bots.keys()]) stopBot(id);
       for (const set of waiting.values()) for (const w of set) w();
       server.closeAllConnections();
       server.close(() => { db.close(); resolve(); });

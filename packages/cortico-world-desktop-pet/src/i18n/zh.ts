@@ -413,4 +413,9 @@ export default {
     notSent: '发送失败',
     tooLate: '该消息已送达，无法撤回。',
   },
+  /** What the person's own Telegram bot answers: once a chat is linked, and to anyone else (src/telegram.ts). */
+  telegram: {
+    linked: "已连接:在这里写的话会送到你的 Buggie。",
+    strangers: "这个机器人只回答连接了它的人。请在 Buggie 设置窗口的 Telegram 页连接。",
+  },
 };

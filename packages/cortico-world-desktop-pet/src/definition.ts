@@ -10,12 +10,13 @@ import type { Answer } from './cua/engine-ipc.ts';
 import { CUA_OFF_TOOL_DECLS, CUA_TOOL_DECLS } from './cua/tools.ts';
 import { petToolDecls } from './tools.ts';
 import { TEAM_TOOL_DECLS } from './team-tools.ts';
+import { TELEGRAM_TOOL_DECLS } from './telegram.ts';
 import { SELF_TYPE } from './chat.ts';
 import { petText } from './i18n/index.ts';
 
 /** Every tool the World can give (the computer-use ones while computer use is on, the way to its switch while it is off) and every event it pushes. */
 const DESCRIBE: WorldDescribe = {
-  tools: describeTools([...petToolDecls(), ...TEAM_TOOL_DECLS, ...CUA_OFF_TOOL_DECLS, ...CUA_TOOL_DECLS], {
+  tools: describeTools([...petToolDecls(), ...TEAM_TOOL_DECLS, ...TELEGRAM_TOOL_DECLS, ...CUA_OFF_TOOL_DECLS, ...CUA_TOOL_DECLS], {
     pet_say: { zh: '在桌宠头顶的气泡里说话,可在话里穿插表情与动作。', en: 'Speaks in a bubble above the pet, with expressions and motions in between.' },
     pet_ask: { zh: '弹出带至多 3 个选项的提问气泡,回答之后作为事件送回。', en: 'Asks a question in a bubble with up to 3 options; the answer comes back later as an event.' },
     pet_move_to: { zh: '沿屏幕底边走到或跑到某个位置,或去形象包自带的目标。', en: "Walks or runs along the bottom edge of the screen to a position, or goes to one of the figure pack's own targets." },
@@ -29,6 +30,7 @@ const DESCRIBE: WorldDescribe = {
     ticket_create: { zh: '在团队服务器的某个项目里新建工单,再问齐还缺的细节。', en: 'Opens a ticket in a project on the team server, then asks for the details still missing.' },
     ticket_update: { zh: '修改工单的状态、负责人、工作组、优先级、标题、类型或细节。', en: "Changes a ticket's status, assignee, work group, priority, title, kind or details." },
     ticket_comment: { zh: '在工单下评论。', en: 'Comments on a ticket.' },
+    telegram_send: { zh: '在 Telegram 上给使用者发消息。只在连接了 Telegram 时给出。', en: 'Sends the person a message on Telegram. Given while Telegram is linked.' },
     pet_cua_open_settings: { zh: '电脑操作关着时,把设置窗口打开到它的开关,附风险说明。', en: 'While computer use is off, opens the settings window at its switch, with what it risks.' },
     pet_cua_screenshot: { zh: '截取一块显示器,附鼠标位置与前台窗口标题。', en: 'Captures one display, with the pointer position and the foreground window title.' },
     pet_cua_zoom: { zh: '从屏幕重新截取截图里的一块,读看不清的小字。', en: 'Captures a region of the screenshot again from the screen, for small text.' },
@@ -100,6 +102,11 @@ const DESCRIBE: WorldDescribe = {
       trigger: 'preempt',
     },
     {
+      type: 'desktop-pet.telegram',
+      description: { zh: '使用者在 Telegram 上发来的消息,经自己的机器人或公司在团队服务器上的机器人。', en: "A message the person sent on Telegram, through their own bot or the company's bot on the team server." },
+      trigger: 'preempt',
+    },
+    {
       type: SELF_TYPE,
       description: { zh: '桌宠自己说的话与做的事,只给对话页显示,不送给 bot。', en: 'What the pet said and did, kept for the chat page and never delivered to the bot.' },
     },
@@ -156,6 +163,8 @@ export function desktopPetDefinition(assembly: DesktopPetAssembly = {}): WorldDe
         storeAsrApiKey: (key) => ctx.storeSecret(DESKTOP_PET_SECRETS.asrApiKey, key),
         teamToken: () => ctx.secret(DESKTOP_PET_SECRETS.teamToken),
         storeTeamToken: (token) => ctx.storeSecret(DESKTOP_PET_SECRETS.teamToken, token),
+        telegramToken: () => ctx.secret(DESKTOP_PET_SECRETS.telegramToken),
+        storeTelegramToken: (token) => ctx.storeSecret(DESKTOP_PET_SECRETS.telegramToken, token),
         botName: () => assembly.botName?.() ?? ctx.botName,
         controls: assembly.controls,
         packRoots: () => [join(ctx.dataDir, 'figures'), ...assembly.packRoots?.() ?? []],

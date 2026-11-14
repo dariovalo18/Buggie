@@ -381,6 +381,10 @@ const fr: Translation<PetText> = {
     notSent: 'Envoi impossible',
     tooLate: 'Ce message a déjà été remis et ne peut plus être repris.',
   },
+  telegram: {
+    linked: "Lié : ce que vous écrivez ici parvient à votre Buggie.",
+    strangers: "Ce bot ne répond qu'à la personne qui l'a lié. Liez-le depuis la page Telegram des réglages de Buggie.",
+  },
 };
 
 export default fr;

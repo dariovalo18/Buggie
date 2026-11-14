@@ -2,7 +2,7 @@ FROM node:24-alpine
 LABEL org.opencontainers.image.title="Buggie team server" \
       org.opencontainers.image.source="https://github.com/dariovalo18/Buggie"
 WORKDIR /app
-COPY hub.ts server.ts ./
+COPY hub.ts server.ts telegram.ts ./
 # the database lives in /data; a fresh named volume takes this owner, so the node user can write it
 RUN mkdir /data && chown node:node /data
 VOLUME /data

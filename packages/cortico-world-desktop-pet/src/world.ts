@@ -64,6 +64,7 @@ import { FocusTimer, type FocusChange, type FocusState } from './focus.ts';
 import { GithubWatch, readRepos, type Notice } from './github.ts';
 import { TeamClient, TeamError, type OrgView, type TeamNotice } from './team.ts';
 import { TEAM_TOOL_DECLS, teamHandlers } from './team-tools.ts';
+import { OwnBot, TELEGRAM_MODES, TELEGRAM_TOOL_DECLS, TelegramError, type TelegramMode } from './telegram.ts';
 
 /** The console panels, titled in `language`. */
 function desktopPetPanelDecls(language: Language = 'zh'): WorldPanelDecl[] {
@@ -251,6 +252,11 @@ export interface DesktopPetWorldOptions {
   /** The team server's sign-in token, read at each request, and where a new one is saved; absent, there is none. */
   teamToken?: () => string;
   storeTeamToken?: (token: string) => void;
+  /** The person's own Telegram bot's token, read at each start, and where a new one is saved; absent, there is none. */
+  telegramToken?: () => string;
+  storeTelegramToken?: (token: string) => void;
+  /** Telegram's Bot API address; tests point it at a local stand-in. */
+  telegramApi?: string;
   /** The bot's name for the menu header, the chat page and computer use's question; read at each use. */
   botName?: () => string;
   controls?: PetBotControls;
@@ -472,10 +478,29 @@ export class DesktopPetWorld implements World {
     org: () => this.cfg.team.org,
     setOrg: (org) => this.opts.persist({ team: { org } }),
     onNotices: (notices) => this.onTeamNotices(notices),
+    onTelegram: (entry) => {
+      if (entry.kind === 'message') { if (this.cfg.telegram.mode === 'team') this.onTelegramMessage(entry.text); } else void this.readTeamTelegram();
+    },
     warn: (message) => this.log?.warn(`团队服务器没能读取:${message}`),
   });
   /** The team settings the client last started from; a change restarts it. */
   private teamKey = '';
+  /** The person's own Telegram bot, read while `telegram.mode` is `own` (src/telegram.ts). */
+  private readonly ownBot = new OwnBot({
+    fetch: (...a) => (this.opts.fetchImpl ?? fetch)(...a),
+    api: () => this.opts.telegramApi,
+    enabled: () => this.cfg.telegram.mode === 'own',
+    token: () => { const t = this.opts.telegramToken?.() ?? ''; return t && t !== NO_TOKEN ? t : null; },
+    link: () => (this.cfg.telegram.chat === null ? null : { chat: this.cfg.telegram.chat, name: this.cfg.telegram.name ?? '' }),
+    setLink: (link) => this.opts.persist({ telegram: { chat: link?.chat ?? null, name: link?.name ?? null } }),
+    onMessage: (text) => this.onTelegramMessage(text),
+    replies: () => this.ui.telegram,
+    warn: (message) => this.log?.warn(`Telegram 没能读取:${message}`),
+  });
+  /** The Telegram settings the own bot last started from. */
+  private telegramKey = '';
+  /** The company bot and this account's link to it, as the team server last told; null before a read. */
+  private teamTelegram: { bot: { username: string } | null; link: { name: string; notify: string } | null } | null = null;
   /** What the status bubble shows. */
   private readonly status: StatusTracker;
   /** Computer use; its tools and its part of the environment prompt are there while `cua.enabled` is on. */
@@ -753,6 +778,7 @@ export class DesktopPetWorld implements World {
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
     this.syncGithub();
     this.syncTeam();
+    this.syncTelegram();
   }
 
   async stop(): Promise<void> {
@@ -760,6 +786,7 @@ export class DesktopPetWorld implements World {
     this.github?.stop();
     this.github = null;
     this.team.stop();
+    this.ownBot.stop();
     this.voiceGeneration++;
     this.runningEngine = null;
     this.status.clear();
@@ -1068,6 +1095,7 @@ export class DesktopPetWorld implements World {
     this.server.syncOverlay();
     this.syncGithub();
     this.syncTeam();
+    this.syncTelegram();
     const paused = this.opts.controls?.isPaused?.() ?? false;
     if (paused !== this.pausedShown) { this.pausedShown = paused; this.chat.broadcast({ t: 'paused', paused }); }
     const bot = this.botName();
@@ -1558,6 +1586,77 @@ export class DesktopPetWorld implements World {
   private onTeamNotices(notices: TeamNotice[]): void {
     const t = this.t;
     void this.push('desktop-pet.team', 'desktop-pet.team', t.team(notices.map((n) => t.teamLine(n))), 'debounce');
+  }
+
+  /** Restarts the own Telegram bot when its mode or token changes, and reads the company bot's link in team mode. */
+  private syncTelegram(): void {
+    const { mode } = this.cfg.telegram;
+    const key = JSON.stringify([mode, this.opts.telegramToken?.() ?? '', this.team.ready]);
+    if (key === this.telegramKey) return;
+    this.telegramKey = key;
+    if (mode === 'own') this.ownBot.restart(); else this.ownBot.stop();
+    if (mode === 'team') void this.readTeamTelegram();
+  }
+
+  /** Reads the company bot and this account's link to it; null when the team server is not ready or does not answer. */
+  private async readTeamTelegram(): Promise<void> {
+    this.teamTelegram = this.team.ready ? await this.team.call('GET', this.team.orgPath('/telegram')).catch(() => null) : null;
+  }
+
+  /** A Telegram chat is linked, the way the mode says: the tool is given. */
+  private telegramReady(): boolean {
+    const { mode } = this.cfg.telegram;
+    return mode === 'own' ? this.ownBot.ready : mode === 'team' ? this.team.ready && !!this.teamTelegram?.link : false;
+  }
+
+  /** The person wrote on Telegram: the bot is woken to answer there. */
+  private onTelegramMessage(text: string): void {
+    void this.push('desktop-pet.telegram', 'desktop-pet.telegram', this.t.telegram(this.userName, text), 'preempt');
+  }
+
+  private async telegramSend(args: Record<string, unknown>): Promise<ToolOutcome> {
+    const text = typeof args.text === 'string' ? args.text.trim() : '';
+    if (!text) return { text: 'telegram: text is empty', failed: true };
+    try {
+      if (this.cfg.telegram.mode === 'own') await this.ownBot.send(text);
+      else await this.team.call('POST', this.team.orgPath('/telegram/send'), { text });
+      return { text: 'sent' };
+    } catch (e) {
+      return { text: `telegram: ${e instanceof TelegramError || e instanceof TeamError ? e.code : String(e)}`, failed: true };
+    }
+  }
+
+  /** What the settings window's Telegram page shows. */
+  private telegramState(): Record<string, unknown> {
+    const role = this.team.view?.org.role;
+    const token = this.opts.telegramToken?.() ?? '';
+    return {
+      mode: this.cfg.telegram.mode,
+      own: {
+        hasToken: !!token && token !== NO_TOKEN,
+        bot: this.ownBot.username, problem: this.ownBot.problem, linked: this.cfg.telegram.chat === null ? null : this.cfg.telegram.name,
+      },
+      team: {
+        ready: this.team.ready, org: this.team.view?.org.name ?? null, admin: !!role && role !== 'member',
+        bot: this.teamTelegram?.bot?.username ?? null, linked: this.teamTelegram?.link?.name ?? null, notify: this.teamTelegram?.link?.notify ?? null,
+      },
+    };
+  }
+
+  /** A Telegram page call: its work, then the state read again; a failure is its error code, a link code comes along. */
+  private async telegramCall(f: () => Promise<unknown>): Promise<Record<string, unknown>> {
+    let error: string | null = null;
+    let extra: unknown = null;
+    try { extra = await f(); } catch (e) { error = e instanceof TelegramError || e instanceof TeamError ? e.code : String(e); }
+    if (this.cfg.telegram.mode === 'team') await this.readTeamTelegram();
+    const linkCode = extra && typeof extra === 'object' && 'code' in extra ? extra : null;
+    return { ...this.telegramState(), error, linkCode };
+  }
+
+  /** Waits for the own bot to check its token: done when it has the bot's name, failed with why it could not. */
+  private async ownBotChecked(): Promise<void> {
+    for (let i = 0; i < 100 && this.ownBot.username === null && this.ownBot.problem === null; i++) await new Promise((r) => setTimeout(r, 100));
+    if (this.ownBot.problem) throw new TelegramError(this.ownBot.problem);
   }
 
   /** What the settings window's Team page shows. */
@@ -2095,6 +2194,7 @@ export class DesktopPetWorld implements World {
       const team = teamHandlers(this.team);
       own.push(...TEAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: team[decl.name]! })));
     }
+    if (this.telegramReady()) own.push(...TELEGRAM_TOOL_DECLS.map((decl) => ({ ...decl, handler: (args: Record<string, unknown>) => this.telegramSend(args) })));
     if (this.cuaOn) return [...own, ...this.cua.tools()];
     return this.cuaCanOpen ? [...own, ...CUA_OFF_TOOL_DECLS.map((decl) => ({ ...decl, handler: handlers[decl.name] }))] : own;
   }
@@ -2469,6 +2569,40 @@ export class DesktopPetWorld implements World {
             throw new Error(this.ui.console.unknownMethod(`pet.teamOrg ${String(verb)} ${String(rest)}`));
           }
           return this.teamCall(async () => this.team.took(await this.team.call<OrgView>(String(verb), this.team.orgPath(rest), body ?? undefined)));
+        }
+        // the Telegram page of the settings window (console/features/telegram/)
+        case 'telegramState': return this.telegramCall(async () => {});
+        case 'telegramMode': {
+          const mode = String(args[0]) as TelegramMode;
+          if (!(TELEGRAM_MODES as readonly string[]).includes(mode)) throw new Error(this.ui.console.unknownMethod(`pet.telegramMode ${mode}`));
+          this.opts.persist({ telegram: { mode } });
+          this.syncTelegram();
+          return this.telegramCall(async () => { if (mode === 'own' && this.ownBot.username === null) await this.ownBotChecked().catch(() => {}); });
+        }
+        case 'telegramToken': {
+          const token = typeof args[0] === 'string' ? args[0].trim() : '';
+          return this.telegramCall(async () => {
+            this.opts.storeTelegramToken?.(token || NO_TOKEN);
+            // another bot: the chat linked to the old one is not this one's
+            this.opts.persist({ telegram: { mode: 'own', chat: null, name: null } });
+            this.syncTelegram();
+            if (token) await this.ownBotChecked();
+          });
+        }
+        case 'telegramLink': return this.telegramCall(async () => {
+          if (this.cfg.telegram.mode === 'team') return this.team.call('POST', this.team.orgPath('/telegram/link'));
+          const code = this.ownBot.linkCode();
+          if (!code) throw new TelegramError('telegram_no_bot');
+          return code;
+        });
+        case 'telegramUnlink': return this.telegramCall(async () => {
+          if (this.cfg.telegram.mode === 'team') await this.team.call('DELETE', this.team.orgPath('/telegram/link'));
+          else this.opts.persist({ telegram: { chat: null, name: null } });
+        });
+        case 'telegramNotify': return this.telegramCall(() => this.team.call('PATCH', this.team.orgPath('/telegram/link'), { notify: String(args[0]) }));
+        case 'telegramTeamBot': {
+          const token = typeof args[0] === 'string' ? args[0].trim() : '';
+          return this.telegramCall(() => (token ? this.team.call('PUT', this.team.orgPath('/telegram'), { token }) : this.team.call('DELETE', this.team.orgPath('/telegram'))));
         }
         case 'teamTickets': {
           const query = typeof args[0] === 'string' ? args[0] : '';

@@ -387,6 +387,10 @@ const ru: Translation<PetText> = {
     notSent: 'Не удалось отправить',
     tooLate: 'Это сообщение уже доставлено, отозвать его нельзя.',
   },
+  telegram: {
+    linked: "Связано: то, что вы пишете здесь, получит ваш Buggie.",
+    strangers: "Этот бот отвечает только тому, кто его связал. Свяжите его на странице Telegram в настройках Buggie.",
+  },
 };
 
 export default ru;

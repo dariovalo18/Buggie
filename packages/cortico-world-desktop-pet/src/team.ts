@@ -30,6 +30,8 @@ export interface OrgView {
 interface Change {
   seq: number; kind: string; actor: Person | null; ticket?: TicketSummary;
   fields?: Record<string, { from: unknown; to: unknown }>; excerpt?: string; member?: Person; sector?: string; project?: string;
+  /** A Telegram entry's message, and the Telegram name a link was made with. */
+  text?: string; telegram?: string;
 }
 
 export type TeamNotice =
@@ -48,6 +50,8 @@ export interface TeamOptions {
   org(): number | null;
   setOrg(id: number | null): void;
   onNotices(notices: TeamNotice[]): void;
+  /** The entries for this account only: a message it was sent on the company's Telegram bot, or the link made. */
+  onTelegram?(entry: { kind: 'message'; text: string } | { kind: 'linked'; name: string }): void;
   /** Called when what `state` shows changes. */
   onState?(): void;
   warn?(message: string): void;
@@ -177,6 +181,10 @@ export class TeamClient {
         if (!live()) return;
         seq = read.seq;
         if (read.changes.some((c) => c.kind === 'sector.member' || c.kind === 'project.member')) await this.refresh();
+        for (const c of read.changes) {
+          if (c.kind === 'telegram.message') this.o.onTelegram?.({ kind: 'message', text: String(c.text ?? '') });
+          else if (c.kind === 'telegram.linked') this.o.onTelegram?.({ kind: 'linked', name: String(c.telegram ?? '') });
+        }
         const notices = read.changes.flatMap((c) => this.notice(c) ?? []);
         if (notices.length) this.o.onNotices(notices);
       } catch (e) {

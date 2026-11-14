@@ -381,6 +381,10 @@ const ko: Translation<PetText> = {
     notSent: '보내지 못했습니다',
     tooLate: '이미 전달된 메시지라 되돌릴 수 없습니다.',
   },
+  telegram: {
+    linked: "연결되었어요. 여기에 쓴 내용이 Buggie에게 전달돼요.",
+    strangers: "이 봇은 연결한 사람에게만 답해요. Buggie 설정 창의 Telegram 페이지에서 연결하세요.",
+  },
 };
 
 export default ko;

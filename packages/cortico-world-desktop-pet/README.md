@@ -27,6 +27,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 | `pet_set(…)` | 改自己的外观和习惯,见「自己调整」 | 自己能改的立即返回;要问的等对方回答 |
 | `pet_quiet(minutes, sound, roam)` | 临时安静:默认关音效、站着不动,到点恢复,设置不变 | 立即返回 |
 | `team_info()`、`ticket_list(…)`、`ticket_get(ref)`、`ticket_create(…)`、`ticket_update(ref, …)`、`ticket_comment(ref, body)` | 团队服务器:帐号、组织、成员、工作组和项目;工单的列表、详情、新建、修改和评论,见「团队服务器」。只在登录并选了公司时给出 | 服务器回的 JSON;失败时是它的错误码 |
+| `telegram_send(text)` | 在 Telegram 上给使用者发消息,见「Telegram」。只在连接了聊天时给出 | `sent`;失败时是错误码 |
 | `pet_see_self()` | 取一张调用那一刻桌宠身体在屏幕上的图:当前形象、打扮、姿态和表情,灰色底,不含气泡和桌面 | 图和一行形象与打扮的名字;桌宠窗口隐藏、没连接,或桌宠页开在浏览器里时失败并写明原因,见「身体图片」 |
 
 表情和动作的词表是当前形象包的 `vocab`(解析在 `src/script.ts`),词的 id 与各语言的名字都认;环境提示词 `src/ENV_PROMPT.md`(英文版 `src/ENV_PROMPT.en.md`)把它渲染成表格,前缀重建时更新。
@@ -52,6 +53,7 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 | `desktop-pet.github` | `[github] 新通知:` 每条一行:仓库、拉取请求或议题的标题、为什么通知到对方 | debounce |
 | `desktop-pet.team` | `[team] 团队服务器上有新动态:` 每条一行:工单号、标题、状态和优先级,以及谁做了什么(分配给对方、在对方的工作组里新建、修改、评论),或对方被加进了哪个工作组或项目 | debounce |
 | `desktop-pet.ticket` | `[ticket] 伙伴想为屏幕上的这只虫子在团队服务器上开一个工单…`,附问题和输出的最后几行 | preempt |
+| `desktop-pet.telegram` | `[telegram] 伙伴在 Telegram 上给你发来:`,附消息 | preempt |
 
 每条事件的正文前是对方那边的本地时间 `[HH:MM]`;一次运行的第一条、换了日期后的第一条带日期和星期 `[MM-DD 周X HH:MM]`。
 表里是中文版;模型文本是英文时,标签是 `[voice]` `[typed]` `[answer]` `[touch]` `[figure]`,星期写 `Sun` 这样的英文缩写。
@@ -67,6 +69,15 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 `clipboardErrors`(默认开)开着时,桌宠窗口每秒读一次剪贴板;复制的文字像报错或堆栈(`looksLikeError`)、bot 的气泡空着时,头顶出一个小气泡问要不要解释,点了「解释」才把文字作为 `[explain]` 送出。开始读剪贴板时已在里面的文字不算。
 
 `github.enabled` 打开时(`src/github.ts`),每 90 秒(没有令牌时 300 秒)读一次 GitHub:`github.repos` 里每个工作流和分支最新一次结束的 Actions 运行,按 `CI <工作流> · <分支>`(在 `github.com/<仓库>`)当作一次运行报告,失败的每个失败步骤一只虫子,通过时吃掉;有令牌时只看对方自己触发的运行。有令牌时还读对方的通知,拉取请求和议题上的新通知作为 `desktop-pet.github`(debounce)送出。令牌依次取 `GH_TOKEN`、`GITHUB_TOKEN`、`gh auth token`。
+
+## Telegram
+
+`telegram.mode` 选和使用者在 Telegram 上说话的方式(`src/telegram.ts`),在设置窗口的「Telegram」页设置,操作走 pet 面板的 `telegram*` 方法:
+
+- `own`:使用者自己的机器人,令牌存为部署的密钥 `DESKTOP_PET_TELEGRAM_TOKEN`(移除后是 `-`)。World 用 `getUpdates` 长轮询读它的私聊,不需要公网地址。连接时页面给一个 10 分钟有效的代码和 `t.me` 链接;发来这个代码的聊天记为 `telegram.chat` 和 `telegram.name`,此后只听这个聊天,别人收到 `telegram.strangers` 那句话。启动之前发来的消息不读。
+- `team`:公司在团队服务器上的机器人(`team-server/README.md` 的「Telegram」)。服务器把使用者的 Telegram 连到帐号上,消息作为只给这个帐号的 `telegram.message` 写进活动日志,`TeamClient` 读到后交给 World。
+
+使用者的消息作为 `desktop-pet.telegram`(preempt)送出;连接了聊天时给出 `telegram_send(text)`,经自己的机器人或团队服务器发回去。
 
 ## 团队服务器
 

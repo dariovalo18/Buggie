@@ -381,6 +381,10 @@ const zhHant: Translation<PetText> = {
     notSent: '傳送失敗',
     tooLate: '該訊息已送達，無法收回。',
   },
+  telegram: {
+    linked: "已連接:在這裡寫的話會送到你的 Buggie。",
+    strangers: "這個機器人只回答連接了它的人。請在 Buggie 設定視窗的 Telegram 頁連接。",
+  },
 };
 
 export default zhHant;

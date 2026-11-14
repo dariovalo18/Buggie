@@ -415,6 +415,10 @@ const en: PetText = {
     notSent: 'Could not send it',
     tooLate: 'That one has already been delivered and cannot be taken back.',
   },
+  telegram: {
+    linked: "Linked: what you write here reaches your Buggie.",
+    strangers: "This bot answers only the person who linked it. Link it from the Telegram page of Buggie's settings window.",
+  },
 };
 
 export default en;

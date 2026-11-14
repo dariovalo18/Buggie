@@ -381,6 +381,10 @@ const ptBR: Translation<PetText> = {
     notSent: 'Não foi possível enviar',
     tooLate: 'Essa mensagem já foi entregue e não pode ser retirada.',
   },
+  telegram: {
+    linked: "Vinculado: o que você escrever aqui chega ao seu Buggie.",
+    strangers: "Este bot só responde à pessoa que o vinculou. Vincule-o na página Telegram das configurações do Buggie.",
+  },
 };
 
 export default ptBR;

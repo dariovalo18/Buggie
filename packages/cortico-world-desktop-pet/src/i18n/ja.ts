@@ -381,6 +381,10 @@ const ja: Translation<PetText> = {
     notSent: '送信できませんでした',
     tooLate: 'そのメッセージはもう届いているため、取り消せません。',
   },
+  telegram: {
+    linked: "リンクしました。ここに書いたことは Buggie に届きます。",
+    strangers: "このボットはリンクした人にだけ答えます。Buggie の設定ウィンドウの Telegram ページからリンクしてください。",
+  },
 };
 
 export default ja;

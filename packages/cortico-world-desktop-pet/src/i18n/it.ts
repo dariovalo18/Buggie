@@ -381,6 +381,10 @@ const it: Translation<PetText> = {
     notSent: 'Invio non riuscito',
     tooLate: 'Questo messaggio è già stato consegnato e non può essere ritirato.',
   },
+  telegram: {
+    linked: "Collegato: quello che scrivi qui arriva al tuo Buggie.",
+    strangers: "Questo bot risponde solo a chi lo ha collegato. Collegalo dalla pagina Telegram delle impostazioni di Buggie.",
+  },
 };
 
 export default it;

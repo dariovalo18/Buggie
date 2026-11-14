@@ -6,6 +6,7 @@ import type { SegmentConfig } from './asr/segmenter.ts';
 import { DEFAULT_HOTKEY, DEFAULT_TYPE_KEY } from './asr/hotkey.ts';
 import { capFor, petText } from './i18n/index.ts';
 import { CUA_DEFAULTS, cuaConfigGroup, type CuaConfig } from './cua/config.ts';
+import type { TelegramMode } from './telegram.ts';
 
 export const DESKTOP_PET_ID = 'desktop-pet';
 
@@ -154,7 +155,7 @@ export type MicMode = 'hold' | 'toggle' | 'always';
 export type AsrEngine = 'funasr' | 'whisper' | 'system' | 'api';
 
 /** The deployment secrets this World reads, by what they are for. */
-export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY', teamToken: 'DESKTOP_PET_TEAM_TOKEN' } as const;
+export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY', teamToken: 'DESKTOP_PET_TEAM_TOKEN', telegramToken: 'DESKTOP_PET_TELEGRAM_TOKEN' } as const;
 /** The team token secret after signing out: a secret cannot be stored empty. */
 export const NO_TOKEN = '-';
 /** The team server a new install points at: one run locally with `pnpm run team-server`. */
@@ -245,6 +246,12 @@ export interface DesktopPetConfigSection extends WorldSection {
    * settings window. The sign-in token is the secret `DESKTOP_PET_SECRETS.teamToken`.
    */
   team: { enabled: boolean; url: string; org: number | null };
+  /**
+   * Talking to the bot on Telegram (src/telegram.ts): `own` through the person's own bot, whose token is the secret
+   * `DESKTOP_PET_SECRETS.telegramToken`, with `chat` the chat they linked; `team` through the company's bot on the
+   * team server, which keeps the link itself.
+   */
+  telegram: { mode: TelegramMode; chat: number | null; name: string | null };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -332,6 +339,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   focus: { minutes: 25, breakMinutes: 5 },
   github: { enabled: false, repos: '' },
   team: { enabled: false, url: TEAM_URL, org: null },
+  telegram: { mode: 'off', chat: null, name: null },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {

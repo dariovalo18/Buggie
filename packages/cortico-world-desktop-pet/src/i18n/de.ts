@@ -381,6 +381,10 @@ const de: Translation<PetText> = {
     notSent: 'Konnte nicht gesendet werden',
     tooLate: 'Diese Nachricht wurde schon zugestellt und lässt sich nicht zurückholen.',
   },
+  telegram: {
+    linked: "Verbunden: Was du hier schreibst, erreicht deinen Buggie.",
+    strangers: "Dieser Bot antwortet nur der Person, die ihn verbunden hat. Verbinde ihn auf der Telegram-Seite in Buggies Einstellungen.",
+  },
 };
 
 export default de;

@@ -191,6 +191,7 @@ Open the settings window from the tray icon or from Buggie's right-click menu.
 | Dress up | Figure, colors and accessories; import or uninstall figure packs |
 | Voice input | Recognition engine or transcription service, model download, talk key, microphone, listening mode, speech threshold |
 | Team | The team server: your account, companies, members, work groups, projects and tickets |
+| Telegram | Talking to Buggie on Telegram: your own bot or the company's bot, linking your chat, notices on Telegram |
 | System prompt | Persona and prompt templates; Ctrl+S saves, and **Apply now** puts the new prompt into the current conversation |
 | Usage & cost | Token usage and spending by day and model |
 | Chat | Conversation history, typing, images |
@@ -226,6 +227,15 @@ While you are signed in, Buggie tells you when a ticket is assigned to you, when
 
 To try it on one computer, run `pnpm run team-server` in the Buggie folder; it listens on `http://127.0.0.1:8791`, the address the Team page starts with. To run it on a server, see [team-server/README.md](team-server/README.md).
 
+### Telegram
+
+Buggie can talk with you on Telegram: what you write there wakes it, and it answers there, so you can ask about your tickets, open one or set a reminder while away from the computer. Pick the way on the **Telegram** page of the settings window:
+
+- **My own bot**: create a bot with @BotFather in Telegram, paste its token, and link your chat with the code the page gives. Only that chat is answered.
+- **The company's bot**: an owner or admin of the company sets the bot on the team server once; each person links their own Telegram from this page, and their messages reach only their Buggie. The team server also tells you of your tickets on Telegram while your Buggie is not connected, or always, or never, as you choose.
+
+Buggie answers on Telegram only while it is running.
+
 ### Updates
 
 The Windows installer build and the AppImage download new versions in the background, and Buggie asks whether to restart and update when one is ready. Choose **Later** and it installs when you quit. To stop automatic updates, turn off **Habits → General → Automatic updates**: Buggie then stops checking and downloading, and an update that was already downloaded is not installed.
@@ -238,7 +248,7 @@ The Mac version, the deb and the Windows portable version do not update themselv
 - **Sent to the model service**: what you say and type, attached images, how you interact with Buggie, and screenshots during computer use. Only the service you configured receives them.
 - **Kept on your computer**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the recognized text is sent; if you choose a transcription service on the Voice input page, each sentence's recording goes to that service.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. They contain the app version, an outline of the system and hardware, which model service and model you use, which extensions are installed, how often and how long you use the app, settings, where in the program a crash happened, and a randomly generated install ID; no conversations, screenshots, keys, error messages or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn them off under **Habits → General → Usage statistics**.
-- **Other network access**: checking GitHub for new versions (the Windows installer build and the AppImage check at start and every 6 hours while automatic updates are on; the other builds check when the settings window opens); npm and the official extension index on GitHub for the extension market, and GitHub for votes and comments; ModelScope, falling back to Hugging Face, when downloading the speech model; the team server at the address on the Team page, while you are signed in.
+- **Other network access**: checking GitHub for new versions (the Windows installer build and the AppImage check at start and every 6 hours while automatic updates are on; the other builds check when the settings window opens); npm and the official extension index on GitHub for the extension market, and GitHub for votes and comments; ModelScope, falling back to Hugging Face, when downloading the speech model; the team server at the address on the Team page, while you are signed in; Telegram (`api.telegram.org`) while your own bot is set on the Telegram page.
 
 ## Data and uninstalling
 

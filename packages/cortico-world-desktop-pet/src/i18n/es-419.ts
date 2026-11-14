@@ -381,6 +381,10 @@ const es419: Translation<PetText> = {
     notSent: 'No se pudo enviar',
     tooLate: 'Ese mensaje ya se entregó y no se puede retirar.',
   },
+  telegram: {
+    linked: "Vinculado: lo que escribas aquí le llega a tu Buggie.",
+    strangers: "Este bot solo responde a la persona que lo vinculó. Vincúlalo desde la página Telegram de la configuración de Buggie.",
+  },
 };
 
 export default es419;

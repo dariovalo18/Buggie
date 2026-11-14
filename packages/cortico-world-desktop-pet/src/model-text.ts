@@ -103,6 +103,7 @@ const zh = {
     `- ${repo} ${kind === 'Issue' ? '议题' : '拉取请求'}「${title}」:${GITHUB_REASONS_ZH[reason] ?? reason}`,
   /** Team server notices (src/team.ts), one line each. */
   team: (lines: string[]) => `[team] 团队服务器上有新动态:\n${lines.join('\n')}`,
+  telegram: (user: string, text: string) => `[telegram] ${user}在 Telegram 上给你发来:\n${text}`,
   teamLine: (n: TeamNotice) => n.kind === 'added'
     ? `- ${n.actor}把你加进了${n.to === 'sector' ? '工作组' : '项目'}「${n.name}」`
     : `- ${n.ticket.ref}「${n.ticket.title}」(${n.ticket.status},优先级 ${n.ticket.priority}):` + (
@@ -275,6 +276,7 @@ const en: typeof zh = {
   github: (lines) => `[github] New notifications:\n${lines.join('\n')}`,
   githubLine: (repo, reason, kind, title) => `- ${repo} ${kind === 'Issue' ? 'issue' : 'pull request'} "${title}": ${GITHUB_REASONS_EN[reason] ?? reason}`,
   team: (lines) => `[team] News on the team server:\n${lines.join('\n')}`,
+  telegram: (user, text) => `[telegram] ${user} wrote to you on Telegram:\n${text}`,
   teamLine: (n) => n.kind === 'added'
     ? `- ${n.actor} added you to the ${n.to === 'sector' ? 'work group' : 'project'} "${n.name}"`
     : `- ${n.ticket.ref} "${n.ticket.title}" (${n.ticket.status}, ${n.ticket.priority} priority): ` + (

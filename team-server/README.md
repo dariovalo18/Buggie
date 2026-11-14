@@ -55,10 +55,25 @@ JSON in and out. Every route except `health`, `register` and `login` takes `Auth
 | `POST /v1/orgs/:org/tickets` `{project, title, kind?, body?, expected?, steps?, environment?, acceptance?, verify?, sector?, priority?, assignee?, source?}` | member | a ticket numbered in its project (`PAY-12`) |
 | `GET`/`PATCH /v1/orgs/:org/tickets/:ref` `{title?, kind?, body?, expected?, steps?, environment?, acceptance?, verify?, status?, priority?, sector?, assignee?}` | member | one ticket with its details and comments; a change |
 | `POST /v1/orgs/:org/tickets/:ref/comments` `{body}` | member | a comment |
-
-A ticket is a `bug` (the default), a `feature` or a `task`. Besides its title it tells what happens (`body`), what should happen instead (`expected`), the steps that show it (`steps`), where (`environment`: branch, version, system), how to know it is done (`acceptance`) and how to check that (`verify`: a command, a test). Every ticket the API returns lists in `missing` the details its kind still needs before it can be worked without asking: `body`, `expected`, `steps` and `acceptance` for a bug, `body` and `acceptance` for the others. A database from before these details gets their columns when the server starts.
 | `GET /v1/orgs/:org/changes?since&wait` | member | the activity log after sequence `since`; without `since`, only the current sequence. `wait` (seconds, up to 30) holds the answer until the next entry |
+| `GET /v1/orgs/:org/telegram` | member | the company's Telegram bot and the caller's link to it: `{bot: {username} | null, link: {name, notify} | null}` |
+| `PUT /v1/orgs/:org/telegram` `{token}`, `DELETE /v1/orgs/:org/telegram` | admin | sets the company's bot (checked with Telegram) or removes it with every link |
+| `POST /v1/orgs/:org/telegram/link` | member | a code good for ten minutes, and the `t.me` link that sends it to the bot |
+| `PATCH /v1/orgs/:org/telegram/link` `{notify}`, `DELETE …/telegram/link` | member | when the caller hears of their tickets on Telegram (`always`, `offline`, `never`); unlinks |
+| `POST /v1/orgs/:org/telegram/send` `{text}` | member | sends the caller's linked chat a message, as their Buggie answers there |
 
 Roles are `owner`, `admin` and `member`. Only an owner makes or unmakes an owner, and an org always keeps one. Statuses are `open`, `in_progress`, `resolved` and `closed`; priorities `low`, `normal`, `high` and `urgent`. A project key is 2 to 10 capital letters and digits, starting with a letter.
 
-The activity log records `ticket.created`, `ticket.updated` (with each changed field's `from` and `to`), `ticket.comment` (with an `excerpt`), `sector.member` and `project.member` (with the `member` added).
+A ticket is a `bug` (the default), a `feature` or a `task`. Besides its title it tells what happens (`body`), what should happen instead (`expected`), the steps that show it (`steps`), where (`environment`: branch, version, system), how to know it is done (`acceptance`) and how to check that (`verify`: a command, a test). Every ticket the API returns lists in `missing` the details its kind still needs before it can be worked without asking: `body`, `expected`, `steps` and `acceptance` for a bug, `body` and `acceptance` for the others. A database from before these details gets their columns when the server starts.
+
+The activity log records `ticket.created`, `ticket.updated` (with each changed field's `from` and `to`), `ticket.comment` (with an `excerpt`), `sector.member` and `project.member` (with the `member` added). `telegram.message` (with its `text`) and `telegram.linked` are for one account only: `/changes` hands them to it alone.
+
+## Telegram
+
+An owner or admin creates the company's bot with @BotFather and sets its token (`PUT …/telegram`); the server keeps it in the database and reads the bot's private messages with `getUpdates` long polling, so it needs no public address, only a way out to `api.telegram.org`. Each member links their own Telegram: Buggie's Telegram page asks for a code (`POST …/telegram/link`) and the person sends it to the bot through the `t.me` link. From then on:
+
+- What they write to the bot goes to their Buggie only, while it is connected (it read `/changes` in the last 15 seconds or is waiting there); otherwise the bot says it did not reach it. Anyone who has not linked is told to link first.
+- Their Buggie answers through `POST …/telegram/send`.
+- News on their tickets (assigned to them, a new unassigned ticket in their work group, a change or comment on a ticket they have or wrote) reaches them on Telegram as they chose: `always`, `offline` (the default: only while their Buggie is not connected) or `never`. What they did themselves is not told.
+
+One bot token can be read by one program at a time: do not use the company's bot as someone's own bot in Buggie.
