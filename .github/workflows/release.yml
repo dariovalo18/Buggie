@@ -89,7 +89,9 @@ jobs:
           for file in "${files[@]}" latest.yml latest-linux.yml; do test -s "$file"; done
           sha256sum "${files[@]}" > SHA256SUMS.txt
           cd ..
-          notes="docs/releases/${GITHUB_REF_NAME}.md"
+          # the release text is the English notes; the Chinese file when a version has none
+          notes="docs/releases/${GITHUB_REF_NAME}.en.md"
+          test -f "$notes" || notes="docs/releases/${GITHUB_REF_NAME}.md"
           test -f "$notes"
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "Buggie $GITHUB_REF_NAME" --notes-file "$notes"
           # a published release keeps its files; only a draft (a rerun after a failed upload) is overwritten

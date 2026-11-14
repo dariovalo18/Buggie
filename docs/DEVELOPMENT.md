@@ -73,8 +73,8 @@ Cortico 是内核,Buggie 是用它做的一个产品。使用者看到的界面�
 ## 发布
 
 1. 改 `package.json` 里的 `version`;
-2. 写 `docs/releases/v<版本>.md`。它既是 GitHub Release 的正文，也随安装包分发：用户更新后 Buggie 会读到上次运行的版本之后每个版本的说明(「## 下载」及以下不给 Buggie),再用自己的话讲给用户;
-   可以另写英文版 `docs/releases/v<版本>.en.md`,只随安装包分发,模型文本是英文时 Buggie 读它(没有就读中文版),它的下载列表以 `## Download` 开头;
+2. 写 `docs/releases/v<版本>.md`(中文)和 `docs/releases/v<版本>.en.md`(英文)。英文版是 GitHub Release 的正文(没有英文版时用中文版);两份都随安装包分发：用户更新后 Buggie 会读到上次运行的版本之后每个版本的说明(「## 下载」及以下不给 Buggie),再用自己的话讲给用户;
+   模型文本是英文时 Buggie 读英文版(没有就读中文版),英文版的下载列表以 `## Download` 开头;
    要给用户写更长的话，写成开发者的信 `docs/releases/v<版本>.letter.md`(英文版 `.letter.en.md`):不进 GitHub Release,随安装包分发，跟更新说明一起整封交给 Buggie,附 GitHub 上该版本标签下的原文链接，由 Buggie 决定转不转达、怎么转达;跨了几个版本更新时只给其中最新的一封;
 3. 提交后打 `v<版本>` 标签并推送。
 
