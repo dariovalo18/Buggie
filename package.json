@@ -1,7 +1,7 @@
 {
   "name": "coopanion",
   "productName": "Buggie",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "A programming assistant for developers built on Cortico: a desktop pet that helps you read, write and debug code, talks, listens and can operate the computer",
   "license": "AGPL-3.0-or-later",
