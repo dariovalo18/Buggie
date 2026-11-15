@@ -13,7 +13,23 @@ permissions:
   contents: read
 
 jobs:
+  # the tag must name the version in package.json and have its notes, or the installers would carry another number
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Tag, version and notes agree
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "$GITHUB_REF_NAME" ]; then echo "::error::tag $GITHUB_REF_NAME, but package.json has version ${version}"; exit 1; fi
+          for notes in "docs/releases/${GITHUB_REF_NAME}.md" "docs/releases/${GITHUB_REF_NAME}.en.md"; do
+            if [ ! -f "$notes" ]; then echo "::error::$notes is missing"; exit 1; fi
+          done
+
   build:
+    needs: check
     strategy:
       fail-fast: false
       matrix:
